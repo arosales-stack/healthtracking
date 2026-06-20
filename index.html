@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>FUEL LOG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+::-webkit-scrollbar{display:none}
+body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:100vh}
+
+/* ── Mobile base ── */
+#shell{display:block}
+#app{max-width:480px;margin:0 auto;padding:20px 16px 56px}
+.tab-nav{display:flex;gap:6px;margin-bottom:18px}
+.tab-btn{flex:1;padding:8px 0;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;border:1px solid #332F35;background:#18161A;color:#9A9499;transition:all .2s;text-align:center}
+.tab-btn.active{border-color:#2BB6A3;background:rgba(43,182,163,.1);color:#2BB6A3}
+#sidebar{display:none}
+
+/* ── Desktop ── */
+@media(min-width:860px){
+  body{overflow-x:hidden}
+  #shell{display:grid;grid-template-columns:200px 1fr;min-height:100vh}
+
+  #sidebar{
+    display:flex;flex-direction:column;
+    background:#111013;border-right:1px solid #221F24;
+    padding:28px 0 24px;position:sticky;top:0;height:100vh;
+  }
+  .sb-logo{padding:0 20px 28px;border-bottom:1px solid #221F24;margin-bottom:16px}
+  .sb-logo h1{font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.04em;line-height:1}
+  .sb-logo p{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9A9499;margin-top:4px;letter-spacing:.1em}
+  .sb-nav{display:flex;flex-direction:column;gap:2px;padding:0 10px;flex:1}
+  .sb-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;font-weight:500;border:none;background:none;color:#9A9499;width:100%;text-align:left;transition:all .2s;letter-spacing:.01em}
+  .sb-btn:hover{background:#18161A;color:#EDE8E1}
+  .sb-btn.active{background:rgba(43,182,163,.12);color:#2BB6A3;border-left:none}
+  .sb-btn svg{opacity:.6;flex-shrink:0}
+  .sb-btn.active svg{opacity:1}
+  .sb-footer{padding:16px 20px 0;border-top:1px solid #221F24;margin-top:auto}
+  .sb-export{width:100%;background:none;border:1px solid #332F35;border-radius:8px;padding:9px 12px;color:#9A9499;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;letter-spacing:.04em}
+  .sb-export:hover{border-color:#2BB6A3;color:#2BB6A3}
+
+  #app{max-width:none;padding:28px 32px 40px;overflow-y:auto}
+  .mobile-header{display:none}
+  .tab-nav{display:none}
+
+  /* 2-col card grid for panels */
+  .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .panel-grid .card{margin-bottom:0}
+  .span-2{grid-column:1/-1}
+
+  /* Larger chart heights on desktop */
+  .chart-h-md{height:200px!important}
+  .chart-h-lg{height:240px!important}
+  .chart-h-sm{height:160px!important}
+
+  .header-bar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px}
+  .header-bar h2{font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;color:#EDE8E1}
+  .header-bar p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A9499;margin-top:3px;letter-spacing:.08em}
+
+  .range-nav{margin-bottom:18px}
+  .stat-val{font-size:26px}
+  .stat-val-sm{font-size:20px}
+  .insight-title{font-size:13px}
+  .insight-body{font-size:12px}
+}
+
+/* ── Shared ── */
+.mono{font-family:'IBM Plex Mono',monospace}
+.display{font-family:'Anton',sans-serif}
+.muted{color:#9A9499}
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px}
+.header h1{font-family:'Anton',sans-serif;font-size:28px;color:#EDE8E1;letter-spacing:.02em;line-height:1}
+.header p{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A9499;margin-top:4px;letter-spacing:.08em}
+.btn-sm{background:none;border:1px solid #332F35;border-radius:6px;padding:6px 10px;color:#9A9499;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Inter',sans-serif}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#18161A;border:1px solid #332F35;border-radius:14px;padding:18px;margin-bottom:12px}
+.card-sm{background:#221F24;border-radius:8px;padding:10px 12px}
+.label{font-size:10px;color:#9A9499;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.big-num{font-family:'IBM Plex Mono',monospace;font-size:42px;font-weight:600;color:#EDE8E1;line-height:1;text-align:center}
+.big-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9A9499;margin-top:4px;text-align:center}
+.dash{height:1px;background:repeating-linear-gradient(90deg,#332F35 0 6px,transparent 6px 12px);margin:16px 0}
+.macro-row{margin-bottom:10px}
+.macro-row-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.macro-row-header span{font-size:11px}
+.macro-track{height:6px;background:#221F24;border-radius:3px;overflow:hidden}
+.macro-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.burn-bar{margin-top:14px;padding:10px 12px;background:#221F24;border-radius:8px;display:flex;justify-content:space-between}
+.range-nav{display:flex;gap:6px;margin-bottom:14px}
+.range-btn{flex:1;padding:7px 0;border-radius:8px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid #332F35;background:#18161A;color:#9A9499}
+.range-btn.active{border-color:#2BB6A3;background:rgba(43,182,163,.1);color:#2BB6A3}
+.chart-wrap{position:relative;width:100%;margin-bottom:6px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;padding:6px 0 4px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#9A9499}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-box{background:#221F24;border-radius:8px;padding:10px 12px}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;line-height:1;margin:4px 0 3px}
+.stat-val-sm{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;line-height:1;margin:4px 0 3px}
+.insight{border-left:2px solid #332F35;padding-left:12px;margin-bottom:12px}
+.insight-title{font-size:12px;font-weight:500;color:#EDE8E1;margin-bottom:3px}
+.insight-body{font-size:11.5px;color:#9A9499;line-height:1.6}
+.readout-head{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#2BB6A3;letter-spacing:.1em;margin-bottom:12px}
+.note-text{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9A9499;margin-top:6px}
+.empty-msg{font-style:italic;color:#9A9499;font-size:13px;margin:24px 0;line-height:1.6}
+.type-pill{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.06em;text-transform:uppercase}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#2BB6A3;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;margin-top:18px;padding-bottom:4px;border-bottom:1px solid #221F24}
+.vol-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1C191E}
+.vol-row:last-child{border-bottom:none}
+.vol-type{font-size:11px;color:#EDE8E1}
+.vol-mins{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9A9499}
+.vol-cal{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="shell">
+
+<!-- ── Desktop sidebar ── -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <h1>FUEL LOG</h1>
+    <p id="todayLabelSb"></p>
+  </div>
+  <div class="sb-nav">
+    <button class="sb-btn active" onclick="switchTab('history',this)" data-tab="history">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      History
+    </button>
+    <button class="sb-btn" onclick="switchTab('training',this)" data-tab="training">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Training
+    </button>
+    <button class="sb-btn" onclick="switchTab('analysis',this)" data-tab="analysis">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analysis
+    </button>
+  </div>
+  <div class="sb-footer">
+    <button class="sb-export" onclick="exportCSV()">&#x2193;&nbsp; Export CSV</button>
+  </div>
+</nav>
+
+<div id="app">
+  <div class="header mobile-header">
+    <div>
+      <h1>FUEL LOG</h1>
+      <p id="todayLabel"></p>
+    </div>
+    <button class="btn-sm" onclick="exportCSV()">&#x2193; Export</button>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('history',this)">History</button>
+    <button class="tab-btn" onclick="switchTab('training',this)">Training</button>
+    <button class="tab-btn" onclick="switchTab('analysis',this)">Analysis</button>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="panel-history" class="panel active">
+    <div class="range-nav">
+      <button class="range-btn active" onclick="setRange(7,this)">7D</button>
+      <button class="range-btn" onclick="setRange(30,this)">30D</button>
+      <button class="range-btn" onclick="setRange(90,this)">90D</button>
+    </div>
+    <div class="panel-grid">
+      <div class="card span-2" style="padding:14px 8px 6px">
+        <div style="padding:0 8px 10px;font-size:11px;font-weight:500">Calories — intake vs. TDEE vs. active output</div>
+        <div class="chart-wrap chart-h-md" style="height:150px"><canvas id="calChart"></canvas></div>
+        <div class="legend" style="padding-left:8px">
+          <div class="legend-item"><span class="legend-dot" style="background:#EDE8E1"></span>Intake</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>TDEE</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#E8A23D"></span>Active kcal</div>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 8px 6px">
+        <div style="display:flex;justify-content:space-between;padding:0 8px 10px">
+          <span style="font-size:11px;font-weight:500">Macros (g)</span>
+          <div class="legend" style="padding:0">
+            <div class="legend-item"><span class="legend-dot" style="background:#E0314F"></span>P</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#E8A23D"></span>C</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#2BB6A3"></span>F</div>
+          </div>
+        </div>
+        <div class="chart-wrap chart-h-md" style="height:140px"><canvas id="macroChart"></canvas></div>
+      </div>
+      <div class="card" style="padding:14px 8px 10px">
+        <div style="padding:0 8px 10px;font-size:11px;font-weight:500">Training volume (min/day)</div>
+        <div class="chart-wrap chart-h-md" style="height:120px"><canvas id="volChart"></canvas></div>
+        <div class="legend" style="padding-left:8px">
+          <div class="legend-item"><span class="legend-dot" style="background:#E0314F"></span>Cardio</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#2BB6A3"></span>Run</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Cycle</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#9A9499"></span>Yoga</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAINING -->
+  <div id="panel-training" class="panel">
+    <div class="range-nav">
+      <button class="range-btn active" onclick="setTrainingRange(7,this)">7D</button>
+      <button class="range-btn" onclick="setTrainingRange(30,this)">30D</button>
+      <button class="range-btn" onclick="setTrainingRange(90,this)">90D</button>
+    </div>
+    <div class="stat-grid-3" id="trainingStatGrid"></div>
+    <div class="panel-grid">
+      <div class="card" style="padding:14px 8px 6px">
+        <div style="padding:0 8px 10px;font-size:11px;font-weight:500">Sessions by type</div>
+        <div class="chart-wrap chart-h-md" style="height:160px"><canvas id="typeChart"></canvas></div>
+      </div>
+      <div class="card" style="padding:14px 8px 6px">
+        <div style="padding:0 8px 10px;font-size:11px;font-weight:500">Daily volume (min) — stacked by type</div>
+        <div class="chart-wrap chart-h-md" style="height:140px"><canvas id="dailyVolChart"></canvas></div>
+        <div class="legend" style="padding-left:8px">
+          <div class="legend-item"><span class="legend-dot" style="background:#E0314F"></span>Cardio</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#2BB6A3"></span>Run</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Cycle</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#9A9499"></span>Yoga</div>
+        </div>
+      </div>
+      <div class="card span-2" style="padding:14px 8px 6px">
+        <div style="padding:0 8px 10px;font-size:11px;font-weight:500">Avg HR by session</div>
+        <div class="chart-wrap chart-h-sm" style="height:120px"><canvas id="hrChart"></canvas></div>
+      </div>
+      <div class="card span-2" id="sessionList" style="padding:14px 16px"></div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS -->
+  <div id="panel-analysis" class="panel">
+
+    <!-- Global headline numbers -->
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="panel-grid">
+    <!-- Resting vs Active split from Garmin -->
+    <div class="card span-2" style="padding:14px 16px 14px">
+      <div class="readout-head" style="margin-bottom:10px">ENERGY BUDGET · GARMIN 1-YEAR</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <div class="label">Resting/day</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:#6B5FD4;margin-top:2px">1,631</div>
+          <div style="font-size:10px;color:#9A9499">BMR · kcal</div>
+        </div>
+        <div>
+          <div class="label">Active/day</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:#E8A23D;margin-top:2px">710</div>
+          <div style="font-size:10px;color:#9A9499">avg · kcal</div>
+        </div>
+        <div>
+          <div class="label">Total/day</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:#2BB6A3;margin-top:2px">2,341</div>
+          <div style="font-size:10px;color:#9A9499">TDEE · kcal</div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="font-size:10px;color:#9A9499;margin-bottom:5px">BMR vs active split</div>
+        <div style="height:8px;background:#221F24;border-radius:4px;overflow:hidden;display:flex">
+          <div style="width:69.7%;background:#6B5FD4;border-radius:4px 0 0 4px"></div>
+          <div style="width:30.3%;background:#E8A23D;border-radius:0 4px 4px 0"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <span style="font-size:10px;color:#6B5FD4;font-family:'IBM Plex Mono',monospace">69.7% resting</span>
+          <span style="font-size:10px;color:#E8A23D;font-family:'IBM Plex Mono',monospace">30.3% active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full timeline: intake + total burn + training vol -->
+    <div class="card span-2" style="padding:14px 8px 6px">
+      <div style="padding:0 8px 6px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:2px">Full timeline — intake vs. total burn</div>
+        <div style="font-size:10px;color:#9A9499">8 months · weekly Garmin burn from Connect</div>
+      </div>
+      <div class="chart-wrap chart-h-lg" style="height:160px"><canvas id="timelineChart"></canvas></div>
+      <div class="legend" style="padding-left:8px">
+        <div class="legend-item"><span class="legend-dot" style="background:#EDE8E1"></span>Intake</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Total burn</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#E0314F;opacity:.5"></span>Deficit zone</div>
+      </div>
+    </div>
+
+    <!-- Monthly energy balance: deficit/surplus bars -->
+    <div class="card" style="padding:14px 8px 6px">
+      <div style="padding:0 8px 6px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:2px">Monthly energy balance</div>
+        <div style="font-size:10px;color:#9A9499">Avg daily (burn − intake). Green = deficit. Red = surplus.</div>
+      </div>
+      <div class="chart-wrap chart-h-md" style="height:130px"><canvas id="balanceChart"></canvas></div>
+    </div>
+
+    <!-- Training volume + active cal overlay -->
+    <div class="card" style="padding:14px 8px 6px">
+      <div style="padding:0 8px 6px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:2px">Training volume by category · monthly</div>
+        <div style="font-size:10px;color:#9A9499">Stacked bars = minutes. Line = avg active kcal/day from Garmin.</div>
+      </div>
+      <div class="chart-wrap chart-h-md" style="height:150px"><canvas id="monthlyTrainChart"></canvas></div>
+      <div class="legend" style="padding-left:8px">
+        <div class="legend-item"><span class="legend-dot" style="background:#E0314F"></span>Cardio</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#2BB6A3"></span>Run</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Cycle</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#9A9499"></span>Yoga</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#E8A23D"></span>Active kcal</div>
+      </div>
+    </div>
+
+    <!-- Macro composition vs training intensity -->
+    <div class="card span-2" style="padding:14px 8px 6px">
+      <div style="padding:0 8px 6px">
+        <div style="font-size:11px;font-weight:500;margin-bottom:2px">Macro mix vs. training intensity</div>
+        <div style="font-size:10px;color:#9A9499">Carb % of intake (left) · avg active kcal/day (right)</div>
+      </div>
+      <div class="chart-wrap chart-h-md" style="height:130px"><canvas id="driftChart"></canvas></div>
+    </div>
+
+    </div><!-- /panel-grid -->
+
+    <!-- Integrated pattern readout -->
+    <div class="card" style="background:#221F24">
+      <div class="readout-head">INTEGRATED PATTERN READOUT</div>
+
+      <div class="insight">
+        <div class="insight-title">You eat 560–700 kcal below TDEE every day</div>
+        <div class="insight-body">Garmin puts your 1-year TDEE at 2,341 kcal/day (1,631 resting + 710 active). Your logged intake averages 1,760–1,850 kcal. That's a structural deficit of 500–580 kcal/day — sustained across every phase. Not a cutting phase, just your baseline.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Active calories track training type, not total volume</div>
+        <div class="insight-body">Jan–Mar: training volume dropped hard but Garmin active kcal barely moved (~680–720/day). High-HR cardio (BodyCombat) burns more per minute than cycling — so May's high session count didn't match the active kcal of a single 50-min Paris cardio. Intensity, not duration, drives that number.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">The Jan–Mar dip: diet held, training dropped — and that's the whole story</div>
+        <div class="insight-body">Intake was flat at ~1,778–1,852 kcal through the dip. Training volume fell ~30%. But because active kcal only dipped ~60 kcal/day (high-HR cardio is efficient), total burn barely changed. Whatever body comp shift occurred in that window was smaller than it felt.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">USA phase (May–Jun 13): volume explosion, intensity drop</div>
+        <div class="insight-body">Cycling sessions 3–5× per day added huge minute counts but Garmin active kcal for those weeks (May avg ~680/day) sat below Paris weeks with single high-HR cardio sessions. The mix also cut running to zero for 4 weeks — specificity cost that you're now paying back.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Carb drop mirrors intensity drop — and that's the risk</div>
+        <div class="insight-body">Carbs peaked in January (your highest-intensity month) then drifted down as training eased. Now that intensity is rebuilding (running back, high-HR cardio daily), carbs are still running ~15g/day below Jan levels. On heavy lower-body days that gap is where output suffers first.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Protein is the one variable you actually control well</div>
+        <div class="insight-body">Across 8 months and 3 distinct training phases, protein held 128–138g/day. That's the tightest of the three macros. The consistency is real — and it's the reason lean mass has been protected through the deficit. Keep it. The 125g floor needs to be non-negotiable even on low-cal days.</div>
+      </div>
+
+      <p class="note-text">Jan–May food data: representative estimates from monthly averages. Oct–Dec, Jun: actual logged. Garmin burn: weekly averages from Connect (Jun 2025–Jun 2026).</p>
+    </div>
+  </div>
+</div><!-- /app -->
+</div><!-- /shell -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── Activity data (from Garmin CSV) ──────────────────────────────────────────
+const ACTIVITIES = [
+  // Jun 2026
+  {date:'2026-06-20',type:'Cardio',mins:51,cal:269,hr:119},
+  {date:'2026-06-20',type:'Running',mins:31,cal:197,hr:127},
+  {date:'2026-06-19',type:'Cardio',mins:45,cal:334,hr:137},
+  {date:'2026-06-19',type:'Running',mins:15,cal:79,hr:118},
+  {date:'2026-06-18',type:'Yoga',mins:26,cal:102,hr:103},
+  {date:'2026-06-18',type:'Cardio',mins:50,cal:265,hr:115},
+  {date:'2026-06-18',type:'Yoga',mins:17,cal:82,hr:108},
+  {date:'2026-06-17',type:'Cardio',mins:6,cal:40,hr:121},
+  {date:'2026-06-17',type:'Cardio',mins:41,cal:195,hr:108},
+  {date:'2026-06-17',type:'Running',mins:7,cal:53,hr:129},
+  {date:'2026-06-16',type:'Yoga',mins:28,cal:126,hr:108},
+  {date:'2026-06-16',type:'Cardio',mins:14,cal:79,hr:112},
+  {date:'2026-06-16',type:'Running',mins:17,cal:138,hr:134},
+  {date:'2026-06-15',type:'Yoga',mins:10,cal:29,hr:91},
+  {date:'2026-06-15',type:'Cardio',mins:17,cal:90,hr:109},
+  {date:'2026-06-15',type:'Cardio',mins:31,cal:197,hr:122},
+  {date:'2026-06-13',type:'Yoga',mins:22,cal:71,hr:95},
+  {date:'2026-06-13',type:'Cycling',mins:27,cal:260,hr:151},
+  {date:'2026-06-12',type:'Cycling',mins:13,cal:119,hr:140},
+  {date:'2026-06-12',type:'Cardio',mins:12,cal:85,hr:123},
+  {date:'2026-06-12',type:'Yoga',mins:16,cal:45,hr:89},
+  {date:'2026-06-12',type:'Yoga',mins:6,cal:26,hr:102},
+  {date:'2026-06-12',type:'Cardio',mins:61,cal:231,hr:98},
+  {date:'2026-06-12',type:'Cardio',mins:19,cal:129,hr:124},
+  {date:'2026-06-12',type:'Cycling',mins:16,cal:137,hr:135},
+  {date:'2026-06-11',type:'Cycling',mins:17,cal:116,hr:122},
+  {date:'2026-06-11',type:'Yoga',mins:27,cal:49,hr:76},
+  {date:'2026-06-11',type:'Cardio',mins:11,cal:44,hr:99},
+  {date:'2026-06-11',type:'Cardio',mins:54,cal:221,hr:99},
+  {date:'2026-06-11',type:'Cycling',mins:17,cal:161,hr:148},
+  {date:'2026-06-10',type:'Cycling',mins:19,cal:114,hr:114},
+  {date:'2026-06-10',type:'Yoga',mins:29,cal:48,hr:74},
+  {date:'2026-06-10',type:'Cardio',mins:18,cal:55,hr:86},
+  {date:'2026-06-10',type:'Cardio',mins:72,cal:278,hr:99},
+  {date:'2026-06-10',type:'Cycling',mins:17,cal:148,hr:139},
+  {date:'2026-06-09',type:'Yoga',mins:2,cal:4,hr:85},
+  {date:'2026-06-09',type:'Yoga',mins:6,cal:14,hr:85},
+  {date:'2026-06-09',type:'Cycling',mins:23,cal:131,hr:116},
+  {date:'2026-06-09',type:'Cycling',mins:3,cal:12,hr:100},
+  {date:'2026-06-09',type:'Cardio',mins:78,cal:323,hr:102},
+  {date:'2026-06-09',type:'Cycling',mins:31,cal:218,hr:129},
+  {date:'2026-06-08',type:'Yoga',mins:22,cal:59,hr:88},
+  {date:'2026-06-08',type:'Cycling',mins:16,cal:119,hr:127},
+  {date:'2026-06-08',type:'Cardio',mins:97,cal:372,hr:100},
+  {date:'2026-06-08',type:'Cycling',mins:21,cal:161,hr:132},
+  {date:'2026-06-07',type:'Yoga',mins:29,cal:70,hr:85},
+  {date:'2026-06-07',type:'Cycling',mins:18,cal:115,hr:116},
+  {date:'2026-06-07',type:'Cardio',mins:67,cal:186,hr:85},
+  {date:'2026-06-07',type:'Cycling',mins:30,cal:199,hr:123},
+  {date:'2026-06-06',type:'Yoga',mins:24,cal:53,hr:81},
+  {date:'2026-06-06',type:'Cardio',mins:54,cal:213,hr:99},
+  {date:'2026-06-06',type:'Cardio',mins:27,cal:210,hr:135},
+  {date:'2026-06-05',type:'Yoga',mins:29,cal:90,hr:95},
+  {date:'2026-06-05',type:'Cardio',mins:19,cal:147,hr:128},
+  {date:'2026-06-05',type:'Cardio',mins:92,cal:322,hr:95},
+  {date:'2026-06-04',type:'Cycling',mins:17,cal:139,hr:136},
+  {date:'2026-06-04',type:'Yoga',mins:27,cal:117,hr:105},
+  {date:'2026-06-04',type:'Cardio',mins:48,cal:251,hr:116},
+  {date:'2026-06-04',type:'Cycling',mins:21,cal:196,hr:147},
+  {date:'2026-06-02',type:'Cycling',mins:7,cal:20,hr:82},
+  {date:'2026-06-02',type:'Cycling',mins:23,cal:167,hr:128},
+  {date:'2026-06-02',type:'Cardio',mins:68,cal:328,hr:117},
+  {date:'2026-06-02',type:'Cycling',mins:18,cal:142,hr:131},
+  {date:'2026-06-01',type:'Yoga',mins:24,cal:140,hr:125},
+  {date:'2026-06-01',type:'Cycling',mins:15,cal:96,hr:118},
+  {date:'2026-06-01',type:'Cycling',mins:32,cal:182,hr:119},
+  {date:'2026-06-01',type:'Cycling',mins:18,cal:147,hr:133},
+  {date:'2026-06-01',type:'Cardio',mins:54,cal:249,hr:107},
+  {date:'2026-06-01',type:'Cycling',mins:20,cal:155,hr:131},
+  // May 2026
+  {date:'2026-05-31',type:'Cycling',mins:5,cal:43,hr:139},
+  {date:'2026-05-31',type:'Cardio',mins:56,cal:229,hr:101},
+  {date:'2026-05-31',type:'Cycling',mins:23,cal:182,hr:133},
+  {date:'2026-05-30',type:'Yoga',mins:23,cal:52,hr:83},
+  {date:'2026-05-30',type:'Cycling',mins:15,cal:122,hr:131},
+  {date:'2026-05-30',type:'Cardio',mins:53,cal:258,hr:109},
+  {date:'2026-05-30',type:'Cycling',mins:21,cal:166,hr:131},
+  {date:'2026-05-29',type:'Yoga',mins:24,cal:56,hr:83},
+  {date:'2026-05-29',type:'Cycling',mins:29,cal:241,hr:136},
+  {date:'2026-05-28',type:'Cardio',mins:69,cal:278,hr:101},
+  {date:'2026-05-28',type:'Cycling',mins:24,cal:230,hr:148},
+  {date:'2026-05-27',type:'Yoga',mins:24,cal:41,hr:75},
+  {date:'2026-05-27',type:'Cardio',mins:75,cal:206,hr:85},
+  {date:'2026-05-26',type:'Cycling',mins:36,cal:306,hr:139},
+  {date:'2026-05-26',type:'Cycling',mins:18,cal:87,hr:104},
+  {date:'2026-05-26',type:'Cardio',mins:56,cal:208,hr:94},
+  {date:'2026-05-26',type:'Cycling',mins:21,cal:147,hr:121},
+  {date:'2026-05-25',type:'Yoga',mins:14,cal:63,hr:104},
+  {date:'2026-05-25',type:'Cycling',mins:8,cal:43,hr:106},
+  {date:'2026-05-25',type:'Cycling',mins:14,cal:70,hr:105},
+  {date:'2026-05-25',type:'Cycling',mins:26,cal:156,hr:114},
+  {date:'2026-05-25',type:'Cardio',mins:52,cal:278,hr:113},
+  {date:'2026-05-24',type:'Yoga',mins:16,cal:26,hr:76},
+  {date:'2026-05-24',type:'Cardio',mins:15,cal:62,hr:99},
+  {date:'2026-05-24',type:'Cycling',mins:21,cal:92,hr:101},
+  {date:'2026-05-24',type:'Cardio',mins:63,cal:154,hr:78},
+  {date:'2026-05-24',type:'Cycling',mins:23,cal:126,hr:110},
+  {date:'2026-05-23',type:'Yoga',mins:25,cal:38,hr:71},
+  {date:'2026-05-23',type:'Cardio',mins:56,cal:136,hr:79},
+  {date:'2026-05-23',type:'Cycling',mins:20,cal:80,hr:97},
+  {date:'2026-05-22',type:'Yoga',mins:24,cal:40,hr:73},
+  {date:'2026-05-22',type:'Cardio',mins:91,cal:297,hr:91},
+  {date:'2026-05-21',type:'Yoga',mins:61,cal:101,hr:73},
+  {date:'2026-05-21',type:'Yoga',mins:22,cal:34,hr:72},
+  {date:'2026-05-21',type:'Cardio',mins:70,cal:180,hr:82},
+  // Apr 2026
+  {date:'2026-04-24',type:'Cardio',mins:66,cal:225,hr:91},
+  {date:'2026-04-23',type:'Yoga',mins:7,cal:23,hr:97},
+  {date:'2026-04-23',type:'Cardio',mins:42,cal:201,hr:110},
+  {date:'2026-04-23',type:'Cardio',mins:25,cal:75,hr:84},
+  {date:'2026-04-23',type:'Running',mins:6,cal:36,hr:116},
+  {date:'2026-04-22',type:'Yoga',mins:28,cal:99,hr:96},
+  {date:'2026-04-22',type:'Cardio',mins:3,cal:21,hr:126},
+  {date:'2026-04-22',type:'Cardio',mins:30,cal:144,hr:109},
+  {date:'2026-04-21',type:'Yoga',mins:24,cal:86,hr:99},
+  {date:'2026-04-21',type:'Running',mins:15,cal:81,hr:111},
+  {date:'2026-04-21',type:'Cardio',mins:18,cal:81,hr:102},
+  {date:'2026-04-20',type:'Yoga',mins:24,cal:74,hr:94},
+  {date:'2026-04-20',type:'Cardio',mins:47,cal:355,hr:135},
+  {date:'2026-04-19',type:'Yoga',mins:35,cal:74,hr:83},
+  {date:'2026-04-19',type:'Cardio',mins:47,cal:203,hr:104},
+  {date:'2026-04-18',type:'Yoga',mins:22,cal:57,hr:90},
+  {date:'2026-04-18',type:'Running',mins:4,cal:20,hr:105},
+  {date:'2026-04-18',type:'Cardio',mins:40,cal:251,hr:127},
+  {date:'2026-04-18',type:'Running',mins:5,cal:42,hr:144},
+  {date:'2026-04-17',type:'Yoga',mins:7,cal:19,hr:89},
+  {date:'2026-04-17',type:'Cardio',mins:24,cal:104,hr:99},
+  {date:'2026-04-17',type:'Cardio',mins:34,cal:134,hr:98},
+  {date:'2026-04-16',type:'Yoga',mins:16,cal:35,hr:82},
+  {date:'2026-04-16',type:'Yoga',mins:12,cal:25,hr:78},
+  {date:'2026-04-16',type:'Cardio',mins:47,cal:257,hr:117},
+  {date:'2026-04-15',type:'Yoga',mins:34,cal:91,hr:88},
+  {date:'2026-04-15',type:'Cardio',mins:52,cal:261,hr:111},
+  {date:'2026-04-15',type:'Running',mins:27,cal:177,hr:126},
+  {date:'2026-04-14',type:'Yoga',mins:30,cal:68,hr:83},
+  {date:'2026-04-14',type:'Cardio',mins:21,cal:102,hr:106},
+  {date:'2026-04-13',type:'Yoga',mins:28,cal:67,hr:85},
+  {date:'2026-04-13',type:'Cardio',mins:31,cal:250,hr:138},
+  {date:'2026-04-12',type:'Yoga',mins:57,cal:181,hr:93},
+  {date:'2026-04-12',type:'Running',mins:39,cal:207,hr:115},
+  {date:'2026-04-11',type:'Yoga',mins:28,cal:71,hr:90},
+  {date:'2026-04-11',type:'Cardio',mins:39,cal:141,hr:97},
+  {date:'2026-04-11',type:'Cardio',mins:38,cal:238,hr:119},
+  {date:'2026-04-10',type:'Yoga',mins:23,cal:75,hr:97},
+  {date:'2026-04-10',type:'Cardio',mins:47,cal:200,hr:100},
+  {date:'2026-04-09',type:'Yoga',mins:23,cal:55,hr:84},
+  {date:'2026-04-09',type:'Cardio',mins:24,cal:114,hr:104},
+  {date:'2026-04-09',type:'Running',mins:21,cal:178,hr:145},
+  {date:'2026-04-08',type:'Yoga',mins:5,cal:16,hr:96},
+  {date:'2026-04-08',type:'Cardio',mins:46,cal:211,hr:108},
+  {date:'2026-04-07',type:'Yoga',mins:34,cal:58,hr:77},
+  {date:'2026-04-07',type:'Cardio',mins:30,cal:147,hr:109},
+  {date:'2026-04-07',type:'Running',mins:7,cal:44,hr:120},
+  {date:'2026-04-07',type:'Cardio',mins:25,cal:165,hr:126},
+  {date:'2026-04-07',type:'Running',mins:11,cal:52,hr:103},
+  {date:'2026-04-06',type:'Yoga',mins:30,cal:64,hr:82},
+  {date:'2026-04-06',type:'Cardio',mins:61,cal:235,hr:98},
+  {date:'2026-04-05',type:'Yoga',mins:32,cal:87,hr:89},
+  {date:'2026-04-05',type:'Cardio',mins:51,cal:233,hr:108},
+  {date:'2026-04-04',type:'Cardio',mins:20,cal:161,hr:135},
+  {date:'2026-04-03',type:'Yoga',mins:26,cal:69,hr:90},
+  {date:'2026-04-03',type:'Cardio',mins:57,cal:240,hr:103},
+  {date:'2026-04-02',type:'Yoga',mins:26,cal:82,hr:95},
+  {date:'2026-04-02',type:'Cardio',mins:36,cal:247,hr:130},
+  {date:'2026-04-01',type:'Yoga',mins:25,cal:97,hr:101},
+  {date:'2026-04-01',type:'Cardio',mins:1,cal:9,hr:122},
+  {date:'2026-04-01',type:'Cardio',mins:26,cal:166,hr:119},
+  // Mar 2026
+  {date:'2026-03-31',type:'Yoga',mins:12,cal:36,hr:94},
+  {date:'2026-03-31',type:'Yoga',mins:6,cal:13,hr:82},
+  {date:'2026-03-31',type:'Cardio',mins:80,cal:351,hr:103},
+  {date:'2026-03-30',type:'Yoga',mins:21,cal:57,hr:92},
+  {date:'2026-03-30',type:'Cardio',mins:17,cal:106,hr:117},
+  {date:'2026-03-30',type:'Running',mins:16,cal:145,hr:145},
+  {date:'2026-03-29',type:'Yoga',mins:25,cal:59,hr:85},
+  {date:'2026-03-29',type:'Cardio',mins:26,cal:225,hr:140},
+  {date:'2026-03-29',type:'Running',mins:25,cal:181,hr:129},
+  {date:'2026-03-28',type:'Yoga',mins:29,cal:111,hr:101},
+  {date:'2026-03-28',type:'Cardio',mins:37,cal:253,hr:128},
+  {date:'2026-03-28',type:'Yoga',mins:4,cal:14,hr:99},
+  {date:'2026-03-27',type:'Yoga',mins:20,cal:70,hr:100},
+  {date:'2026-03-27',type:'Cardio',mins:32,cal:129,hr:97},
+  {date:'2026-03-27',type:'Yoga',mins:22,cal:112,hr:112},
+  {date:'2026-03-26',type:'Yoga',mins:18,cal:88,hr:109},
+  {date:'2026-03-26',type:'Cardio',mins:40,cal:248,hr:120},
+  {date:'2026-03-25',type:'Yoga',mins:1,cal:4,hr:122},
+  {date:'2026-03-25',type:'Cardio',mins:61,cal:306,hr:108},
+  {date:'2026-03-24',type:'Yoga',mins:36,cal:123,hr:98},
+  {date:'2026-03-24',type:'Running',mins:5,cal:40,hr:124},
+  {date:'2026-03-24',type:'Cardio',mins:28,cal:171,hr:118},
+  {date:'2026-03-23',type:'Yoga',mins:37,cal:144,hr:102},
+  {date:'2026-03-23',type:'Cardio',mins:20,cal:96,hr:106},
+  {date:'2026-03-22',type:'Yoga',mins:28,cal:139,hr:110},
+  {date:'2026-03-22',type:'Cardio',mins:43,cal:225,hr:116},
+  {date:'2026-03-21',type:'Yoga',mins:35,cal:143,hr:107},
+  {date:'2026-03-20',type:'Yoga',mins:18,cal:78,hr:103},
+  {date:'2026-03-20',type:'Cardio',mins:25,cal:218,hr:141},
+  {date:'2026-03-19',type:'Yoga',mins:24,cal:48,hr:79},
+  {date:'2026-03-19',type:'Cardio',mins:46,cal:210,hr:105},
+  {date:'2026-03-18',type:'Yoga',mins:23,cal:45,hr:79},
+  {date:'2026-03-18',type:'Cardio',mins:46,cal:235,hr:110},
+  {date:'2026-03-17',type:'Cardio',mins:21,cal:93,hr:100},
+  {date:'2026-03-17',type:'Cardio',mins:24,cal:132,hr:114},
+  {date:'2026-03-17',type:'Running',mins:14,cal:91,hr:118},
+  {date:'2026-03-16',type:'Yoga',mins:26,cal:72,hr:87},
+  {date:'2026-03-16',type:'Cardio',mins:46,cal:236,hr:113},
+  {date:'2026-03-15',type:'Yoga',mins:42,cal:170,hr:106},
+];
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+const DAYS_KEY = 'fuel-log:days';
+let DAYS = {};
+let currentRange = 7;
+let currentTrainingRange = 7;
+let charts = {};
+
+async function loadStorage() {
+  try {
+    if (window.storage) {
+      const r = await window.storage.get(DAYS_KEY, false);
+      if (r?.value) { DAYS = JSON.parse(r.value); return; }
+    }
+  } catch(_) {}
+  try {
+    const ls = localStorage.getItem(DAYS_KEY);
+    if (ls) { DAYS = JSON.parse(ls); return; }
+  } catch(_) {}
+  DAYS = buildSeed();
+  await saveStorage();
+}
+
+async function saveStorage() {
+  const json = JSON.stringify(DAYS);
+  try { if (window.storage) await window.storage.set(DAYS_KEY, json, false); } catch(_) {}
+  try { localStorage.setItem(DAYS_KEY, json); } catch(_) {}
+}
+
+// ── Seed data ─────────────────────────────────────────────────────────────────
+function buildSeed() {
+  const actual = {
+    "2025-10-26":{cal:1964,p:157,c:202,f:65,s:28,burn:2350},
+    "2025-10-27":{cal:1704,p:133,c:169,f:61,s:22,burn:2310},
+    "2025-10-28":{cal:1740,p:140,c:183,f:59,s:25,burn:2340},
+    "2025-10-29":{cal:1785,p:137,c:145,f:76,s:18,burn:2380},
+    "2025-10-30":{cal:1818,p:132,c:159,f:76,s:21,burn:2360},
+    "2025-10-31":{cal:1611,p:145,c:118,f:54,s:15,burn:2290},
+    "2025-11-01":{cal:1712,p:160,c:131,f:54,s:18,burn:2330},
+    "2025-11-02":{cal:1905,p:136,c:211,f:64,s:30,burn:2400},
+    "2025-11-03":{cal:1679,p:123,c:154,f:64,s:22,burn:2280},
+    "2025-11-04":{cal:1657,p:138,c:113,f:67,s:15,burn:2260},
+    "2025-11-05":{cal:1641,p:133,c:146,f:58,s:19,burn:2310},
+    "2025-11-06":{cal:1740,p:137,c:138,f:57,s:16,burn:2340},
+    "2025-11-07":{cal:1689,p:141,c:136,f:68,s:17,burn:2290},
+    "2025-11-08":{cal:1899,p:142,c:163,f:78,s:24,burn:2410},
+    "2025-11-10":{cal:1727,p:138,c:146,f:68,s:20,burn:2340},
+    "2025-11-11":{cal:1781,p:138,c:188,f:57,s:27,burn:2360},
+    "2025-11-12":{cal:1763,p:124,c:133,f:81,s:18,burn:2290},
+    "2025-11-14":{cal:1755,p:131,c:156,f:71,s:22,burn:2320},
+    "2025-11-15":{cal:1685,p:133,c:185,f:47,s:26,burn:2300},
+    "2025-11-16":{cal:1943,p:136,c:209,f:54,s:32,burn:2400},
+    "2025-11-17":{cal:1773,p:131,c:171,f:65,s:24,burn:1980},
+    "2025-11-18":{cal:1519,p:117,c:111,f:68,s:15,burn:2300},
+    "2025-11-19":{cal:1741,p:132,c:167,f:61,s:23,burn:1980},
+    "2025-11-20":{cal:1709,p:125,c:198,f:48,s:28,burn:2250},
+    "2025-11-21":{cal:1916,p:140,c:223,f:50,s:34,burn:2400},
+    "2025-11-22":{cal:1705,p:123,c:154,f:85,s:22,burn:2240},
+    "2025-11-23":{cal:1725,p:118,c:158,f:69,s:23,burn:2160},
+    "2025-11-24":{cal:1805,p:121,c:183,f:71,s:26,burn:2140},
+    "2025-11-29":{cal:1813,p:112,c:166,f:65,s:24,burn:2300},
+    "2025-11-30":{cal:2055,p:133,c:150,f:62,s:21,burn:2500},
+    "2025-12-01":{cal:1926,p:130,c:133,f:71,s:18,burn:2189},
+    "2025-12-02":{cal:1605,p:139,c:142,f:63,s:20,burn:2280},
+    "2025-12-03":{cal:2195,p:141,c:180,f:47,s:28,burn:2490},
+    "2025-12-04":{cal:1704,p:141,c:123,f:41,s:16,burn:2200},
+    "2025-12-05":{cal:2177,p:131,c:188,f:49,s:28,burn:2400},
+    "2025-12-06":{cal:2305,p:130,c:233,f:49,s:36,burn:2890},
+    "2025-12-07":{cal:1840,p:136,c:174,f:69,s:25,burn:2131},
+    "2025-12-08":{cal:1729,p:141,c:164,f:60,s:23,burn:2600},
+    "2025-12-09":{cal:1872,p:125,c:176,f:81,s:26,burn:2200},
+    "2025-12-10":{cal:1796,p:133,c:147,f:79,s:21,burn:2500},
+    "2025-12-11":{cal:1835,p:130,c:187,f:70,s:27,burn:2590},
+    "2025-12-12":{cal:1786,p:129,c:178,f:80,s:26,burn:2000},
+    "2025-12-13":{cal:1677,p:120,c:207,f:43,s:30,burn:2300},
+    "2025-12-14":{cal:1969,p:139,c:178,f:82,s:26,burn:2500},
+    "2025-12-15":{cal:1809,p:137,c:173,f:72,s:25,burn:2500},
+    "2025-12-18":{cal:1692,p:123,c:152,f:67,s:21,burn:2300},
+    "2025-12-19":{cal:1646,p:125,c:171,f:61,s:24,burn:1989},
+    "2025-12-20":{cal:1878,p:147,c:180,f:56,s:27,burn:2425},
+    "2025-12-21":{cal:1855,p:140,c:181,f:72,s:26,burn:2425},
+    "2025-12-24":{cal:1742,p:130,c:173,f:77,s:24,burn:2100},
+    "2025-12-25":{cal:1866,p:144,c:160,f:87,s:22,burn:2000},
+    "2026-06-16":{cal:663,p:61,c:41,f:31,s:19,burn:2275},
+    "2026-06-17":{cal:1167,p:92,c:98,f:44,s:4,burn:2200},
+    "2026-06-18":{cal:1695,p:129,c:143,f:67,s:34,burn:2369},
+  };
+  const avgs = {
+    '2026-01':{cal:1852,p:138,c:179,f:64,burn:2380},
+    '2026-02':{cal:1810,p:132,c:170,f:67,burn:2360},
+    '2026-03':{cal:1778,p:135,c:157,f:72,burn:2311},
+    '2026-04':{cal:1722,p:128,c:159,f:67,burn:2447},
+    '2026-05':{cal:1790,p:130,c:165,f:65,burn:2350},
+  };
+  const days = {
+    '2026-01':[2,4,6,9,11,14,16,18,21,23,25,27,30],
+    '2026-02':[2,5,8,11,14,17,20,23,26],
+    '2026-03':[1,4,7,10,13,16,19,22,25,28],
+    '2026-04':[1,4,7,10,13,16,19,22,25,28],
+    '2026-05':[3,7,11,15,19,23,27],
+  };
+  let s=42; const rnd=()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/4294967296;};
+  const vary=(b,p)=>Math.round(b*(1+(rnd()-.5)*p));
+  const gen={};
+  for(const[mk,avg]of Object.entries(avgs)){
+    const[y,m]=mk.split('-').map(Number);
+    for(const d of days[mk]){
+      const pad=n=>n<10?'0'+n:n;
+      const key=`${y}-${pad(m)}-${pad(d)}`;
+      gen[key]={cal:vary(avg.cal,.12),p:vary(avg.p,.1),c:vary(avg.c,.15),f:vary(avg.f,.15),s:Math.round(vary(avg.c,.15)*.16),burn:vary(avg.burn,.08),est:true};
+    }
+  }
+  return {...gen,...actual};
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function pad(n){return n<10?'0'+n:String(n);}
+function dateStr(d){return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function fmtShort(s){const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function toMins(t){if(!t||t==='--')return 0;const p=t.split(':').map(Number);if(p.length===3)return p[0]*60+p[1]+p[2]/60;return p[0]+p[1]/60;}
+
+function getSlice(rangeDays){
+  const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-rangeDays);
+  const cutStr=dateStr(cutoff);
+  return Object.keys(DAYS).sort().filter(d=>d>=cutStr).map(d=>({date:d,label:fmtShort(d),...DAYS[d]}));
+}
+
+function avg(arr){return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0;}
+
+function getActivitySlice(rangeDays) {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - rangeDays);
+  const cutStr = dateStr(cutoff);
+  return ACTIVITIES.filter(a => a.date >= cutStr);
+}
+
+function aggregateByDate(acts) {
+  const byDate = {};
+  for (const a of acts) {
+    if (!byDate[a.date]) byDate[a.date] = {Cardio:0,Running:0,Cycling:0,Yoga:0,calBurn:0,sessions:[]};
+    const key = (a.type==='Indoor Cycling'||a.type==='Cycling') ? 'Cycling' :
+                 a.type==='Running' ? 'Running' :
+                 a.type==='Yoga' ? 'Yoga' : 'Cardio';
+    byDate[a.date][key] += a.mins;
+    byDate[a.date].calBurn += a.cal;
+    byDate[a.date].sessions.push(a);
+  }
+  return byDate;
+}
+
+function getMonthlyStats(){
+  const months={};
+  for(const[d,v]of Object.entries(DAYS)){
+    const mk=d.slice(0,7);
+    if(!months[mk])months[mk]={cal:[],p:[],c:[],f:[],burn:[],count:0};
+    months[mk].cal.push(v.cal);months[mk].p.push(v.p);months[mk].c.push(v.c);months[mk].f.push(v.f);
+    if(v.burn)months[mk].burn.push(v.burn);months[mk].count++;
+  }
+  // Monthly training mins
+  const trainByMonth = {};
+  for (const a of ACTIVITIES) {
+    const mk = a.date.slice(0,7);
+    if (!trainByMonth[mk]) trainByMonth[mk] = {Cardio:0,Running:0,Cycling:0,Yoga:0,days:new Set()};
+    const key = (a.type==='Indoor Cycling'||a.type==='Cycling') ? 'Cycling' :
+                 a.type==='Running' ? 'Running' :
+                 a.type==='Yoga' ? 'Yoga' : 'Cardio';
+    trainByMonth[mk][key] += a.mins;
+    trainByMonth[mk].days.add(a.date);
+  }
+  return Object.entries(months).sort().map(([mk,v])=>{
+    const tm = trainByMonth[mk] || {Cardio:0,Running:0,Cycling:0,Yoga:0,days:new Set()};
+    const daysCount = tm.days.size || 1;
+    const totalMins = tm.Cardio + tm.Running + tm.Cycling + tm.Yoga;
+    return {
+      month:mk,
+      label:new Date(mk+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'}),
+      cal:avg(v.cal),p:avg(v.p),c:avg(v.c),f:avg(v.f),burn:avg(v.burn),days:v.count,deficit:avg(v.burn)-avg(v.cal),
+      trainMinsPerDay: Math.round(totalMins/daysCount),
+      cardioMins:tm.Cardio, runMins:tm.Running, cycleMins:tm.Cycling, yogaMins:tm.Yoga
+    };
+  });
+}
+
+function get3MonthAvg(){
+  const sl=getSlice(90).filter(d=>d.cal>0);
+  if(!sl.length)return null;
+  const protHit=sl.filter(d=>d.p>=113).length;
+  return{cal:avg(sl.map(d=>d.cal)),p:avg(sl.map(d=>d.p)),c:avg(sl.map(d=>d.c)),f:avg(sl.map(d=>d.f)),burn:avg(sl.map(d=>d.burn||0)),days:sl.length,proteinHitPct:Math.round(protHit/sl.length*100),deficit:avg(sl.map(d=>d.burn||0))-avg(sl.map(d=>d.cal))};
+}
+
+// ── Chart defaults ────────────────────────────────────────────────────────────
+Chart.defaults.color='#9A9499';
+Chart.defaults.font.family="'IBM Plex Mono',monospace";
+Chart.defaults.font.size=9;
+const GRID='rgba(51,47,53,.7)';
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn,.sb-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  // activate matching mobile + sidebar buttons
+  document.querySelectorAll('[data-tab="'+tab+'"],.tab-btn').forEach(b=>{
+    if(b.dataset && b.dataset.tab===tab) b.classList.add('active');
+  });
+  if(btn) btn.classList.add('active');
+  if(tab==='history')renderHistory();
+  if(tab==='training')renderTraining();
+  if(tab==='analysis')renderAnalysis();
+}
+
+function setRange(r,btn){
+  document.querySelectorAll('#panel-history .range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentRange=r;
+  renderHistory();
+}
+
+function setTrainingRange(r,btn){
+  document.querySelectorAll('#panel-training .range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTrainingRange=r;
+  renderTraining();
+}
+
+// ── History panel ─────────────────────────────────────────────────────────────
+function renderHistory(){
+  const sl=getSlice(currentRange);
+  const labels=sl.map(d=>d.label);
+  const calData=sl.map(d=>d.cal);
+  const burnData=sl.map(d=>d.burn||null);
+
+  // Training cal per day from ACTIVITIES
+  const actSlice = getActivitySlice(currentRange);
+  const actByDate = aggregateByDate(actSlice);
+  const trainCalData = sl.map(d => actByDate[d.date]?.calBurn || null);
+  // Garmin total burn per day (precise weekly lookup)
+  const garminBurnData = sl.map(d => getGarminBurn(d.date));
+
+  const pData=sl.map(d=>d.p);
+  const cData=sl.map(d=>d.c);
+  const fData=sl.map(d=>d.f);
+
+  // Volume stacked per day
+  const cardioMins = sl.map(d => actByDate[d.date]?.Cardio || 0);
+  const runMins = sl.map(d => actByDate[d.date]?.Running || 0);
+  const cycleMins = sl.map(d => actByDate[d.date]?.Cycling || 0);
+  const yogaMins = sl.map(d => actByDate[d.date]?.Yoga || 0);
+
+  destroyChart('calChart');
+  destroyChart('macroChart');
+  destroyChart('volChart');
+
+  const maxTick = currentRange>14?7:currentRange;
+
+  charts.calChart=new Chart(document.getElementById('calChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Garmin TDEE',data:garminBurnData,borderColor:'#6B5FD4',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:.3,fill:false},
+      {label:'Active kcal',data:trainCalData,borderColor:'#E8A23D',borderWidth:1.5,borderDash:[2,3],pointRadius:0,tension:.3,fill:false},
+      {label:'Intake',data:calData,borderColor:'#EDE8E1',borderWidth:2,pointRadius:2,pointBackgroundColor:'#EDE8E1',tension:.3,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{grid:{color:GRID},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:5}}}}
+  });
+
+  charts.macroChart=new Chart(document.getElementById('macroChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Protein',data:pData,backgroundColor:'#E0314F',stack:'m'},
+      {label:'Carbs',data:cData,backgroundColor:'#E8A23D',stack:'m'},
+      {label:'Fat',data:fData,backgroundColor:'#2BB6A3',stack:'m'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:5}}}}
+  });
+
+  charts.volChart=new Chart(document.getElementById('volChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Cardio',data:cardioMins,backgroundColor:'#E0314F',stack:'v'},
+      {label:'Run',data:runMins,backgroundColor:'#2BB6A3',stack:'v'},
+      {label:'Cycle',data:cycleMins,backgroundColor:'#6B5FD4',stack:'v'},
+      {label:'Yoga',data:yogaMins,backgroundColor:'#9A9499',stack:'v'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
+  });
+}
+
+// ── Training panel ────────────────────────────────────────────────────────────
+function renderTraining(){
+  const acts = getActivitySlice(currentTrainingRange);
+  const byDate = aggregateByDate(acts);
+  const dates = [...new Set(acts.map(a=>a.date))].sort();
+  const labels = dates.map(fmtShort);
+
+  // Stat cards
+  const totalMins = acts.reduce((s,a)=>s+a.mins,0);
+  const totalSessions = acts.filter(a=>a.type!=='Yoga').length;
+  const avgHR = Math.round(acts.filter(a=>a.hr>0).reduce((s,a)=>s+a.hr,0)/acts.filter(a=>a.hr>0).length)||0;
+  const totalCal = acts.reduce((s,a)=>s+a.cal,0);
+
+  document.getElementById('trainingStatGrid').innerHTML=`
+    <div class="stat-box"><div class="label">Total time</div><div class="stat-val-sm" style="color:#2BB6A3">${Math.floor(totalMins/60)}h${Math.round(totalMins%60)}m</div><div style="font-size:10px;color:#9A9499">${dates.length} active days</div></div>
+    <div class="stat-box"><div class="label">Sessions</div><div class="stat-val-sm" style="color:#EDE8E1">${totalSessions}</div><div style="font-size:10px;color:#9A9499">excl. yoga</div></div>
+    <div class="stat-box"><div class="label">Avg HR</div><div class="stat-val-sm" style="color:#E0314F">${avgHR}</div><div style="font-size:10px;color:#9A9499">bpm</div></div>
+  `;
+  // Garmin energy context below stat cards
+  const existingCtx = document.getElementById('garminCtxCard');
+  if (!existingCtx) {
+    const ctxCard = document.createElement('div');
+    ctxCard.id = 'garminCtxCard';
+    ctxCard.className = 'card';
+    ctxCard.style.cssText = 'padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px';
+    ctxCard.innerHTML = `
+      <div><div class="label">Resting/day</div><div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#6B5FD4;margin-top:3px">1,631</div><div style="font-size:10px;color:#9A9499">kcal · BMR</div></div>
+      <div><div class="label">Active/day</div><div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#E8A23D;margin-top:3px">710</div><div style="font-size:10px;color:#9A9499">kcal · avg</div></div>
+      <div><div class="label">TDEE</div><div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#2BB6A3;margin-top:3px">2,341</div><div style="font-size:10px;color:#9A9499">kcal/day</div></div>
+    `;
+    document.getElementById('trainingStatGrid').after(ctxCard);
+  }
+
+  // By-type totals for donut
+  const typeMap = {Cardio:0,Running:0,Cycling:0,Yoga:0};
+  for(const a of acts){
+    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':'Cardio';
+    typeMap[k]+=a.mins;
+  }
+
+  // Daily stacked
+  const cardioMins = dates.map(d=>byDate[d]?.Cardio||0);
+  const runMins = dates.map(d=>byDate[d]?.Running||0);
+  const cycleMins = dates.map(d=>byDate[d]?.Cycling||0);
+  const yogaMins = dates.map(d=>byDate[d]?.Yoga||0);
+
+  // HR per session (last 20 for readability)
+  const hrActs = acts.filter(a=>a.hr>0).slice(-20);
+
+  destroyChart('typeChart');
+  destroyChart('dailyVolChart');
+  destroyChart('hrChart');
+
+  charts.typeChart=new Chart(document.getElementById('typeChart'),{
+    type:'doughnut',
+    data:{
+      labels:['Cardio','Running','Cycling','Yoga'],
+      datasets:[{data:[typeMap.Cardio,typeMap.Running,typeMap.Cycling,typeMap.Yoga],backgroundColor:['#E0314F','#2BB6A3','#6B5FD4','#9A9499'],borderWidth:0,hoverOffset:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{display:true,position:'right',labels:{boxWidth:10,padding:12,font:{size:9}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${Math.floor(ctx.raw/60)}h${Math.round(ctx.raw%60)}m`}}}}
+  });
+
+  const maxTick=currentTrainingRange>14?7:currentTrainingRange;
+  charts.dailyVolChart=new Chart(document.getElementById('dailyVolChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Cardio',data:cardioMins,backgroundColor:'#E0314F',stack:'v'},
+      {label:'Run',data:runMins,backgroundColor:'#2BB6A3',stack:'v'},
+      {label:'Cycle',data:cycleMins,backgroundColor:'#6B5FD4',stack:'v'},
+      {label:'Yoga',data:yogaMins,backgroundColor:'#9A9499',stack:'v'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
+  });
+
+  const hrColors=hrActs.map(a=>(a.type==='Indoor Cycling'||a.type==='Cycling')?'#6B5FD4':a.type==='Running'?'#2BB6A3':a.type==='Yoga'?'#9A9499':'#E0314F');
+  charts.hrChart=new Chart(document.getElementById('hrChart'),{
+    type:'bar',
+    data:{labels:hrActs.map(a=>fmtShort(a.date)),datasets:[{label:'Avg HR',data:hrActs.map(a=>a.hr),backgroundColor:hrColors,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} bpm — ${hrActs[ctx.dataIndex].type}`}}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:10}},y:{min:60,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
+  });
+
+  // Session list
+  const recentActs = [...acts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
+  const typeColor={Cardio:'#E0314F',Running:'#2BB6A3',Cycling:'#6B5FD4',Yoga:'#9A9499'};
+  const container = document.getElementById('sessionList');
+  container.innerHTML=`<div class="readout-head">RECENT SESSIONS</div>`+recentActs.map(a=>{
+    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':'Cardio';
+    const col=typeColor[k];
+    return `<div class="vol-row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="width:3px;height:28px;background:${col};border-radius:2px;display:inline-block;flex-shrink:0"></span>
+        <div>
+          <div class="vol-type">${a.type}</div>
+          <div style="font-size:10px;color:#9A9499">${fmtShort(a.date)} · ${a.mins}min${a.hr?' · '+a.hr+'bpm':''}</div>
+        </div>
+      </div>
+      <div class="vol-cal" style="color:${col}">${a.cal} kcal</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Garmin weekly burn lookup (from Connect screenshot, avg daily total) ──────
+// Key = week-start date (Monday or closest), value = avg daily total kcal
+const GARMIN_WEEKLY = {
+  '2025-10-05':2294,'2025-10-12':2359,'2025-10-19':2325,'2025-10-26':2261,
+  '2025-11-02':2213,'2025-11-09':2226,'2025-11-16':2222,'2025-11-23':2269,'2025-11-30':2337,
+  '2025-12-07':2350,'2025-12-14':2280,'2025-12-21':2180,'2025-12-28':2379,
+  '2026-01-04':2344,'2026-01-11':2225,'2026-01-18':2425,'2026-01-25':2376,
+  '2026-02-01':2318,'2026-02-08':2289,'2026-02-15':2336,'2026-02-22':2337,
+  '2026-03-01':2208,'2026-03-08':2221,'2026-03-15':2353,'2026-03-22':2415,'2026-03-29':2382,
+  '2026-04-05':2383,'2026-04-12':2326,'2026-04-19':2492,'2026-04-26':2383,
+  '2026-05-03':2293,'2026-05-10':2234,'2026-05-17':2204,'2026-05-24':2387,'2026-05-31':2490,
+  '2026-06-07':2500,'2026-06-14':2475,
+};
+
+// Get Garmin avg daily burn for a given date by finding closest week
+function getGarminBurn(dateStr) {
+  const keys = Object.keys(GARMIN_WEEKLY).sort();
+  let best = keys[0];
+  for (const k of keys) { if (k <= dateStr) best = k; else break; }
+  return GARMIN_WEEKLY[best];
+}
+
+// Monthly averages of Garmin weekly data
+const GARMIN_MONTHLY_BURN = {
+  '2025-10': Math.round((2294+2359+2325+2261)/4),
+  '2025-11': Math.round((2213+2226+2222+2269+2337)/5),
+  '2025-12': Math.round((2350+2280+2180+2379)/4),
+  '2026-01': Math.round((2344+2225+2425+2376)/4),
+  '2026-02': Math.round((2318+2289+2336+2337)/4),
+  '2026-03': Math.round((2208+2221+2353+2415+2382)/5),
+  '2026-04': Math.round((2383+2326+2492+2383)/4),
+  '2026-05': Math.round((2293+2234+2204+2387+2490)/5),
+  '2026-06': Math.round((2500+2475)/2),
+};
+
+// Monthly active kcal (total - resting 1631)
+const GARMIN_MONTHLY_ACTIVE = Object.fromEntries(
+  Object.entries(GARMIN_MONTHLY_BURN).map(([k,v])=>[k, v - 1631])
+);
+
+// ── Analysis panel ────────────────────────────────────────────────────────────
+function renderAnalysis(){
+  const monthly = getMonthlyStats();
+  const allMonths = monthly; // use all available months
+  const stats = get3MonthAvg();
+
+  // Compute true deficit using Garmin burn per month
+  const tdee = 2341; // Garmin 1-year avg total
+
+  if(stats){
+    const garminDef = tdee - stats.cal;
+    const protHit = stats.proteinHitPct;
+    document.getElementById('statGrid').innerHTML=`
+      <div class="stat-box"><div class="label">Avg intake</div><div class="stat-val" style="color:#EDE8E1">${stats.cal}</div><div style="font-size:11px;color:#9A9499">kcal/day · 90d</div></div>
+      <div class="stat-box"><div class="label">TDEE</div><div class="stat-val" style="color:#6B5FD4">2,341</div><div style="font-size:11px;color:#9A9499">kcal/day · Garmin</div></div>
+      <div class="stat-box"><div class="label">Structural deficit</div><div class="stat-val" style="color:#2BB6A3">−${garminDef}</div><div style="font-size:11px;color:#9A9499">kcal/day avg</div></div>
+      <div class="stat-box"><div class="label">Protein hit rate</div><div class="stat-val" style="color:${protHit>=70?'#2BB6A3':'#E8A23D'}">${protHit}%</div><div style="font-size:11px;color:#9A9499">≥125g days</div></div>
+    `;
+  }
+
+  destroyChart('timelineChart');
+  destroyChart('balanceChart');
+  destroyChart('monthlyTrainChart');
+  destroyChart('driftChart');
+
+  // ── Timeline chart: all months, intake vs Garmin burn ──
+  const tlLabels = allMonths.map(m=>m.label);
+  const tlIntake = allMonths.map(m=>m.cal);
+  const tlBurn   = allMonths.map(m=>GARMIN_MONTHLY_BURN[m.month] || m.burn);
+
+  charts.timelineChart = new Chart(document.getElementById('timelineChart'),{
+    type:'line',
+    data:{labels:tlLabels, datasets:[
+      {label:'Total burn',data:tlBurn,borderColor:'#6B5FD4',borderWidth:2,pointRadius:3,pointBackgroundColor:'#6B5FD4',tension:.3,fill:false},
+      {label:'Intake',data:tlIntake,borderColor:'#EDE8E1',borderWidth:2,pointRadius:3,pointBackgroundColor:'#EDE8E1',tension:.3,
+        fill:{target:{value:tlBurn},above:'rgba(224,49,79,.08)',below:'rgba(43,182,163,.06)'}},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+        callbacks:{afterBody:items=>{const b=tlBurn[items[0].dataIndex];const i=tlIntake[items[0].dataIndex];return`Balance: ${b-i>0?'+':''}${b-i} kcal`;}}}},
+      scales:{
+        x:{grid:{display:false},border:{display:false}},
+        y:{min:1600,max:2700,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:5}}
+      }}
+  });
+
+  // ── Balance chart: monthly deficit/surplus ──
+  const balanceData = allMonths.map(m=>{
+    const burn = GARMIN_MONTHLY_BURN[m.month] || m.burn;
+    return burn - m.cal; // positive = deficit (burn > intake)
+  });
+  const balanceColors = balanceData.map(v => v > 0 ? 'rgba(43,182,163,.7)' : 'rgba(224,49,79,.7)');
+
+  charts.balanceChart = new Chart(document.getElementById('balanceChart'),{
+    type:'bar',
+    data:{labels:tlLabels, datasets:[{
+      label:'Energy balance',data:balanceData,
+      backgroundColor:balanceColors,borderRadius:4,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw>0?'Deficit':'Surplus'}: ${Math.abs(ctx.raw)} kcal/day`}}},
+      scales:{
+        x:{grid:{display:false},border:{display:false}},
+        y:{grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:5},
+          afterDataLimits:axis=>{const m=Math.max(Math.abs(axis.min),Math.abs(axis.max));axis.min=-m;axis.max=m;}}
+      }}
+  });
+
+  // ── Monthly training + active kcal line ──
+  const activeKcalByMonth = allMonths.map(m => GARMIN_MONTHLY_ACTIVE[m.month] || null);
+
+  charts.monthlyTrainChart = new Chart(document.getElementById('monthlyTrainChart'),{
+    type:'bar',
+    data:{labels:tlLabels, datasets:[
+      {type:'bar',label:'Cardio',data:allMonths.map(m=>m.cardioMins),backgroundColor:'#E0314F',stack:'t',yAxisID:'y'},
+      {type:'bar',label:'Run',data:allMonths.map(m=>m.runMins),backgroundColor:'#2BB6A3',stack:'t',yAxisID:'y'},
+      {type:'bar',label:'Cycle',data:allMonths.map(m=>m.cycleMins),backgroundColor:'#6B5FD4',stack:'t',yAxisID:'y'},
+      {type:'bar',label:'Yoga',data:allMonths.map(m=>m.yogaMins),backgroundColor:'#9A9499',stack:'t',yAxisID:'y'},
+      {type:'line',label:'Active kcal/day',data:activeKcalByMonth,borderColor:'#E8A23D',borderWidth:2,
+       pointRadius:4,pointBackgroundColor:'#E8A23D',tension:.3,fill:false,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{stacked:true,grid:{display:false},border:{display:false}},
+        y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4},position:'left'},
+        y2:{min:400,max:900,grid:{display:false},border:{display:false},ticks:{maxTicksLimit:4},position:'right'}
+      }}
+  });
+
+  // ── Carb % vs active kcal ──
+  const carbPct = allMonths.map(m => Math.round(m.c * 4 / m.cal * 100));
+
+  charts.driftChart = new Chart(document.getElementById('driftChart'),{
+    type:'line',
+    data:{labels:tlLabels, datasets:[
+      {label:'Carb % of intake',data:carbPct,borderColor:'#E8A23D',borderWidth:2,
+       pointRadius:3,pointBackgroundColor:'#E8A23D',tension:.3,fill:false,yAxisID:'y'},
+      {label:'Active kcal/day',data:activeKcalByMonth,borderColor:'#E0314F',borderWidth:2,borderDash:[4,3],
+       pointRadius:3,pointBackgroundColor:'#E0314F',tension:.3,fill:false,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+        callbacks:{label:ctx=>ctx.datasetIndex===0?`Carb %: ${ctx.raw}%`:`Active: ${ctx.raw} kcal`}}},
+      scales:{
+        x:{grid:{display:false},border:{display:false}},
+        y:{min:25,max:50,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4,callback:v=>v+'%'},position:'left'},
+        y2:{min:400,max:900,grid:{display:false},border:{display:false},ticks:{maxTicksLimit:4},position:'right'}
+      }}
+  });
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function exportCSV(){
+  // Build activity lookup by date
+  const actByDate = {};
+  for(const a of ACTIVITIES){
+    if(!actByDate[a.date]) actByDate[a.date]={cardio_min:0,run_min:0,cycle_min:0,yoga_min:0,training_kcal:0,sessions:0,avg_hr_sum:0,avg_hr_count:0};
+    const d = actByDate[a.date];
+    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'cycle_min':a.type==='Running'?'run_min':a.type==='Yoga'?'yoga_min':'cardio_min';
+    d[k] += a.mins;
+    d.training_kcal += a.cal;
+    if(a.type!=='Yoga'){ d.sessions++; }
+    if(a.hr>0){ d.avg_hr_sum+=a.hr; d.avg_hr_count++; }
+  }
+
+  // All dates = union of food log + activity dates
+  const allDates = new Set([...Object.keys(DAYS),...Object.keys(actByDate)]);
+  const sorted = [...allDates].sort();
+
+  const headers = [
+    'date',
+    // Food
+    'calories_kcal','protein_g','carbs_g','fat_g','sugar_g','food_estimated',
+    // Energy (Garmin)
+    'garmin_tdee_kcal','garmin_resting_kcal','garmin_active_kcal',
+    // Training
+    'training_kcal','cardio_min','run_min','cycle_min','yoga_min','total_training_min',
+    'sessions','avg_session_hr',
+    // Derived
+    'energy_balance_kcal'
+  ];
+
+  const rows = [headers];
+  for(const d of sorted){
+    const f = DAYS[d] || {};
+    const t = actByDate[d] || {};
+    const tdee = getGarminBurn(d);
+    const resting = 1631;
+    const active = tdee - resting;
+    const totalMin = (t.cardio_min||0)+(t.run_min||0)+(t.cycle_min||0)+(t.yoga_min||0);
+    const avgHr = t.avg_hr_count ? Math.round(t.avg_hr_sum/t.avg_hr_count) : '';
+    const balance = f.cal ? tdee - f.cal : '';
+
+    rows.push([
+      d,
+      f.cal||'', f.p||'', f.c||'', f.f||'', f.s||'', f.est?'yes':(f.cal?'no':''),
+      tdee, resting, active,
+      t.training_kcal||'', t.cardio_min||'', t.run_min||'', t.cycle_min||'', t.yoga_min||'', totalMin||'',
+      t.sessions||'', avgHr,
+      balance
+    ]);
+  }
+
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = Object.assign(document.createElement('a'),{
+    href: URL.createObjectURL(new Blob([csv],{type:'text/csv'})),
+    download: 'fuel-log-full.csv'
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+const todayStr = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+const tlMobile = document.getElementById('todayLabel');
+const tlSidebar = document.getElementById('todayLabelSb');
+if(tlMobile) tlMobile.textContent = todayStr;
+if(tlSidebar) tlSidebar.textContent = todayStr;
+loadStorage().then(()=>{renderHistory();});
+
+window.fuelLogWrite=async(date,data)=>{
+  DAYS[date]=data;
+  await saveStorage();
+  console.log('fuel-log: wrote',date,data);
+};
+</script>
+</body>
+</html>
