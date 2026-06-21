@@ -659,10 +659,11 @@ function buildSeed() {
     "2025-12-21":{cal:1855,p:140,c:181,f:72,s:26,burn:2425},
     "2025-12-24":{cal:1742,p:130,c:173,f:77,s:24,burn:2100},
     "2025-12-25":{cal:1866,p:144,c:160,f:87,s:22,burn:2000},
-    "2026-06-16":{cal:663,p:61,c:41,f:31,s:19,burn:2275},
-    "2026-06-17":{cal:1167,p:92,c:98,f:44,s:4,burn:2200},
-    "2026-06-18":{cal:1695,p:129,c:143,f:67,s:34,burn:2369},
-    "2026-06-20":{cal:1937,p:201,c:157,f:56,s:71,burn:2900},
+    "2026-06-16":{cal:663,p:61,c:41,f:31,s:19,burn:2687},
+    "2026-06-17":{cal:1167,p:92,c:98,f:44,s:4,burn:2772},
+    "2026-06-18":{cal:1695,p:129,c:143,f:67,s:34,burn:2648},
+    "2026-06-19":{cal:1800,p:120,c:155,f:55,s:28,burn:3139,est:true},
+    "2026-06-20":{cal:1937,p:201,c:157,f:56,s:71,burn:2917},
   };
   const avgs = {
     '2026-01':{cal:1852,p:138,c:179,f:64,burn:2380},
@@ -998,11 +999,18 @@ const GARMIN_WEEKLY = {
   '2026-03-01':2208,'2026-03-08':2221,'2026-03-15':2353,'2026-03-22':2415,'2026-03-29':2382,
   '2026-04-05':2383,'2026-04-12':2326,'2026-04-19':2492,'2026-04-26':2383,
   '2026-05-03':2293,'2026-05-10':2234,'2026-05-17':2204,'2026-05-24':2387,'2026-05-31':2490,
-  '2026-06-07':2500,'2026-06-14':2475,
+  '2026-06-07':2500,'2026-06-14':2475,'2026-06-15':2824,
 };
 
-// Get Garmin avg daily burn for a given date by finding closest week
+// Exact daily Garmin totals where available (override weekly avg)
+const GARMIN_DAILY = {
+  '2026-06-15':2824,'2026-06-16':2687,'2026-06-17':2772,
+  '2026-06-18':2648,'2026-06-19':3139,'2026-06-20':2917,'2026-06-21':1816,
+};
+
+// Get Garmin avg daily burn — daily exact first, then weekly avg
 function getGarminBurn(dateStr) {
+  if (GARMIN_DAILY[dateStr]) return GARMIN_DAILY[dateStr];
   const keys = Object.keys(GARMIN_WEEKLY).sort();
   let best = keys[0];
   for (const k of keys) { if (k <= dateStr) best = k; else break; }
