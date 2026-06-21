@@ -220,6 +220,8 @@ body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:
           <div class="legend-item"><span class="legend-dot" style="background:#2BB6A3"></span>Run</div>
           <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Cycle</div>
           <div class="legend-item"><span class="legend-dot" style="background:#9A9499"></span>Yoga</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#E8A23D"></span>Lower</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#4FA3D1"></span>Upper</div>
         </div>
       </div>
       <div class="card span-2" style="padding:14px 8px 6px">
@@ -365,8 +367,9 @@ body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:
 // ── Activity data (from Garmin CSV) ──────────────────────────────────────────
 const ACTIVITIES = [
   // Jun 2026
-  {date:'2026-06-20',type:'Cardio',mins:51,cal:269,hr:119},
-  {date:'2026-06-20',type:'Running',mins:31,cal:197,hr:127},
+  {date:'2026-06-20',type:'Running',mins:20,cal:160,hr:148},
+  {date:'2026-06-20',type:'LowerBody',mins:60,cal:280,hr:128},
+  {date:'2026-06-20',type:'Yoga',mins:25,cal:70,hr:88},
   {date:'2026-06-19',type:'Cardio',mins:45,cal:334,hr:137},
   {date:'2026-06-19',type:'Running',mins:15,cal:79,hr:118},
   {date:'2026-06-18',type:'Yoga',mins:26,cal:102,hr:103},
@@ -659,6 +662,7 @@ function buildSeed() {
     "2026-06-16":{cal:663,p:61,c:41,f:31,s:19,burn:2275},
     "2026-06-17":{cal:1167,p:92,c:98,f:44,s:4,burn:2200},
     "2026-06-18":{cal:1695,p:129,c:143,f:67,s:34,burn:2369},
+    "2026-06-20":{cal:1937,p:201,c:157,f:56,s:71,burn:2900},
   };
   const avgs = {
     '2026-01':{cal:1852,p:138,c:179,f:64,burn:2380},
@@ -711,10 +715,12 @@ function getActivitySlice(rangeDays) {
 function aggregateByDate(acts) {
   const byDate = {};
   for (const a of acts) {
-    if (!byDate[a.date]) byDate[a.date] = {Cardio:0,Running:0,Cycling:0,Yoga:0,calBurn:0,sessions:[]};
+    if (!byDate[a.date]) byDate[a.date] = {Cardio:0,Running:0,Cycling:0,Yoga:0,LowerBody:0,UpperBody:0,calBurn:0,sessions:[]};
     const key = (a.type==='Indoor Cycling'||a.type==='Cycling') ? 'Cycling' :
                  a.type==='Running' ? 'Running' :
-                 a.type==='Yoga' ? 'Yoga' : 'Cardio';
+                 a.type==='Yoga' ? 'Yoga' :
+                 a.type==='LowerBody' ? 'LowerBody' :
+                 a.type==='UpperBody' ? 'UpperBody' : 'Cardio';
     byDate[a.date][key] += a.mins;
     byDate[a.date].calBurn += a.cal;
     byDate[a.date].sessions.push(a);
@@ -734,23 +740,26 @@ function getMonthlyStats(){
   const trainByMonth = {};
   for (const a of ACTIVITIES) {
     const mk = a.date.slice(0,7);
-    if (!trainByMonth[mk]) trainByMonth[mk] = {Cardio:0,Running:0,Cycling:0,Yoga:0,days:new Set()};
+    if (!trainByMonth[mk]) trainByMonth[mk] = {Cardio:0,Running:0,Cycling:0,Yoga:0,LowerBody:0,UpperBody:0,days:new Set()};
     const key = (a.type==='Indoor Cycling'||a.type==='Cycling') ? 'Cycling' :
                  a.type==='Running' ? 'Running' :
-                 a.type==='Yoga' ? 'Yoga' : 'Cardio';
+                 a.type==='Yoga' ? 'Yoga' :
+                 a.type==='LowerBody' ? 'LowerBody' :
+                 a.type==='UpperBody' ? 'UpperBody' : 'Cardio';
     trainByMonth[mk][key] += a.mins;
     trainByMonth[mk].days.add(a.date);
   }
   return Object.entries(months).sort().map(([mk,v])=>{
-    const tm = trainByMonth[mk] || {Cardio:0,Running:0,Cycling:0,Yoga:0,days:new Set()};
+    const tm = trainByMonth[mk] || {Cardio:0,Running:0,Cycling:0,Yoga:0,LowerBody:0,UpperBody:0,days:new Set()};
     const daysCount = tm.days.size || 1;
-    const totalMins = tm.Cardio + tm.Running + tm.Cycling + tm.Yoga;
+    const totalMins = tm.Cardio + tm.Running + tm.Cycling + tm.Yoga + tm.LowerBody + tm.UpperBody;
     return {
       month:mk,
       label:new Date(mk+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'}),
       cal:avg(v.cal),p:avg(v.p),c:avg(v.c),f:avg(v.f),burn:avg(v.burn),days:v.count,deficit:avg(v.burn)-avg(v.cal),
       trainMinsPerDay: Math.round(totalMins/daysCount),
-      cardioMins:tm.Cardio, runMins:tm.Running, cycleMins:tm.Cycling, yogaMins:tm.Yoga
+      cardioMins:tm.Cardio, runMins:tm.Running, cycleMins:tm.Cycling, yogaMins:tm.Yoga,
+      lowerMins:tm.LowerBody, upperMins:tm.UpperBody
     };
   });
 }
@@ -822,6 +831,8 @@ function renderHistory(){
   const runMins = sl.map(d => actByDate[d.date]?.Running || 0);
   const cycleMins = sl.map(d => actByDate[d.date]?.Cycling || 0);
   const yogaMins = sl.map(d => actByDate[d.date]?.Yoga || 0);
+  const lowerMins = sl.map(d => actByDate[d.date]?.LowerBody || 0);
+  const upperMins = sl.map(d => actByDate[d.date]?.UpperBody || 0);
 
   destroyChart('calChart');
   destroyChart('macroChart');
@@ -858,6 +869,8 @@ function renderHistory(){
       {label:'Run',data:runMins,backgroundColor:'#2BB6A3',stack:'v'},
       {label:'Cycle',data:cycleMins,backgroundColor:'#6B5FD4',stack:'v'},
       {label:'Yoga',data:yogaMins,backgroundColor:'#9A9499',stack:'v'},
+      {label:'Lower Body',data:lowerMins,backgroundColor:'#E8A23D',stack:'v'},
+      {label:'Upper Body',data:upperMins,backgroundColor:'#4FA3D1',stack:'v'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
       scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
@@ -898,9 +911,9 @@ function renderTraining(){
   }
 
   // By-type totals for donut
-  const typeMap = {Cardio:0,Running:0,Cycling:0,Yoga:0};
+  const typeMap = {Cardio:0,Running:0,Cycling:0,Yoga:0,LowerBody:0,UpperBody:0};
   for(const a of acts){
-    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':'Cardio';
+    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':a.type==='LowerBody'?'LowerBody':a.type==='UpperBody'?'UpperBody':'Cardio';
     typeMap[k]+=a.mins;
   }
 
@@ -909,6 +922,8 @@ function renderTraining(){
   const runMins = dates.map(d=>byDate[d]?.Running||0);
   const cycleMins = dates.map(d=>byDate[d]?.Cycling||0);
   const yogaMins = dates.map(d=>byDate[d]?.Yoga||0);
+  const lowerMinsT = dates.map(d=>byDate[d]?.LowerBody||0);
+  const upperMinsT = dates.map(d=>byDate[d]?.UpperBody||0);
 
   // HR per session (last 20 for readability)
   const hrActs = acts.filter(a=>a.hr>0).slice(-20);
@@ -920,8 +935,8 @@ function renderTraining(){
   charts.typeChart=new Chart(document.getElementById('typeChart'),{
     type:'doughnut',
     data:{
-      labels:['Cardio','Running','Cycling','Yoga'],
-      datasets:[{data:[typeMap.Cardio,typeMap.Running,typeMap.Cycling,typeMap.Yoga],backgroundColor:['#E0314F','#2BB6A3','#6B5FD4','#9A9499'],borderWidth:0,hoverOffset:4}]
+      labels:['Cardio','Running','Cycling','Yoga','Lower Body','Upper Body'],
+      datasets:[{data:[typeMap.Cardio,typeMap.Running,typeMap.Cycling,typeMap.Yoga,typeMap.LowerBody,typeMap.UpperBody],backgroundColor:['#E0314F','#2BB6A3','#6B5FD4','#9A9499','#E8A23D','#4FA3D1'],borderWidth:0,hoverOffset:4}]
     },
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       plugins:{legend:{display:true,position:'right',labels:{boxWidth:10,padding:12,font:{size:9}}},
@@ -936,12 +951,14 @@ function renderTraining(){
       {label:'Run',data:runMins,backgroundColor:'#2BB6A3',stack:'v'},
       {label:'Cycle',data:cycleMins,backgroundColor:'#6B5FD4',stack:'v'},
       {label:'Yoga',data:yogaMins,backgroundColor:'#9A9499',stack:'v'},
+      {label:'Lower Body',data:lowerMinsT,backgroundColor:'#E8A23D',stack:'v'},
+      {label:'Upper Body',data:upperMinsT,backgroundColor:'#4FA3D1',stack:'v'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
       scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
   });
 
-  const hrColors=hrActs.map(a=>(a.type==='Indoor Cycling'||a.type==='Cycling')?'#6B5FD4':a.type==='Running'?'#2BB6A3':a.type==='Yoga'?'#9A9499':'#E0314F');
+  const hrColors=hrActs.map(a=>(a.type==='Indoor Cycling'||a.type==='Cycling')?'#6B5FD4':a.type==='Running'?'#2BB6A3':a.type==='Yoga'?'#9A9499':a.type==='LowerBody'?'#E8A23D':a.type==='UpperBody'?'#4FA3D1':'#E0314F');
   charts.hrChart=new Chart(document.getElementById('hrChart'),{
     type:'bar',
     data:{labels:hrActs.map(a=>fmtShort(a.date)),datasets:[{label:'Avg HR',data:hrActs.map(a=>a.hr),backgroundColor:hrColors,borderRadius:3}]},
@@ -952,10 +969,10 @@ function renderTraining(){
 
   // Session list
   const recentActs = [...acts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
-  const typeColor={Cardio:'#E0314F',Running:'#2BB6A3',Cycling:'#6B5FD4',Yoga:'#9A9499'};
+  const typeColor={Cardio:'#E0314F',Running:'#2BB6A3',Cycling:'#6B5FD4',Yoga:'#9A9499',LowerBody:'#E8A23D',UpperBody:'#4FA3D1'};
   const container = document.getElementById('sessionList');
   container.innerHTML=`<div class="readout-head">RECENT SESSIONS</div>`+recentActs.map(a=>{
-    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':'Cardio';
+    const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':a.type==='LowerBody'?'LowerBody':a.type==='UpperBody'?'UpperBody':'Cardio';
     const col=typeColor[k];
     return `<div class="vol-row">
       <div style="display:flex;align-items:center;gap:8px">
@@ -1088,6 +1105,8 @@ function renderAnalysis(){
       {type:'bar',label:'Run',data:allMonths.map(m=>m.runMins),backgroundColor:'#2BB6A3',stack:'t',yAxisID:'y'},
       {type:'bar',label:'Cycle',data:allMonths.map(m=>m.cycleMins),backgroundColor:'#6B5FD4',stack:'t',yAxisID:'y'},
       {type:'bar',label:'Yoga',data:allMonths.map(m=>m.yogaMins),backgroundColor:'#9A9499',stack:'t',yAxisID:'y'},
+      {type:'bar',label:'Lower Body',data:allMonths.map(m=>m.lowerMins||0),backgroundColor:'#E8A23D',stack:'t',yAxisID:'y'},
+      {type:'bar',label:'Upper Body',data:allMonths.map(m=>m.upperMins||0),backgroundColor:'#4FA3D1',stack:'t',yAxisID:'y'},
       {type:'line',label:'Active kcal/day',data:activeKcalByMonth,borderColor:'#E8A23D',borderWidth:2,
        pointRadius:4,pointBackgroundColor:'#E8A23D',tension:.3,fill:false,yAxisID:'y2'},
     ]},
