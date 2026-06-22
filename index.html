@@ -221,7 +221,7 @@ body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:
           <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Cycle</div>
           <div class="legend-item"><span class="legend-dot" style="background:#9A9499"></span>Yoga</div>
           <div class="legend-item"><span class="legend-dot" style="background:#E8A23D"></span>Lower</div>
-          <div class="legend-item"><span class="legend-dot" style="background:#4FA3D1"></span>Upper</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#C084FC"></span>Upper</div>
         </div>
       </div>
       <div class="card span-2" style="padding:14px 8px 6px">
@@ -886,7 +886,7 @@ function renderHistory(){
       {label:'Cycle',data:cycleMins,backgroundColor:'#6B5FD4',stack:'v'},
       {label:'Yoga',data:yogaMins,backgroundColor:'#9A9499',stack:'v'},
       {label:'Lower Body',data:lowerMins,backgroundColor:'#E8A23D',stack:'v'},
-      {label:'Upper Body',data:upperMins,backgroundColor:'#4FA3D1',stack:'v'},
+      {label:'Upper Body',data:upperMins,backgroundColor:'#C084FC',stack:'v'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
       scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
@@ -952,7 +952,7 @@ function renderTraining(){
     type:'doughnut',
     data:{
       labels:['Cardio','Running','Cycling','Yoga','Lower Body','Upper Body'],
-      datasets:[{data:[typeMap.Cardio,typeMap.Running,typeMap.Cycling,typeMap.Yoga,typeMap.LowerBody,typeMap.UpperBody],backgroundColor:['#E0314F','#2BB6A3','#6B5FD4','#9A9499','#E8A23D','#4FA3D1'],borderWidth:0,hoverOffset:4}]
+      datasets:[{data:[typeMap.Cardio,typeMap.Running,typeMap.Cycling,typeMap.Yoga,typeMap.LowerBody,typeMap.UpperBody],backgroundColor:['#E0314F','#2BB6A3','#6B5FD4','#9A9499','#E8A23D','#C084FC'],borderWidth:0,hoverOffset:4}]
     },
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       plugins:{legend:{display:true,position:'right',labels:{boxWidth:10,padding:12,font:{size:9}}},
@@ -968,13 +968,13 @@ function renderTraining(){
       {label:'Cycle',data:cycleMins,backgroundColor:'#6B5FD4',stack:'v'},
       {label:'Yoga',data:yogaMins,backgroundColor:'#9A9499',stack:'v'},
       {label:'Lower Body',data:lowerMinsT,backgroundColor:'#E8A23D',stack:'v'},
-      {label:'Upper Body',data:upperMinsT,backgroundColor:'#4FA3D1',stack:'v'},
+      {label:'Upper Body',data:upperMinsT,backgroundColor:'#C084FC',stack:'v'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
       scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{stacked:true,grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:4}}}}
   });
 
-  const hrColors=hrActs.map(a=>(a.type==='Indoor Cycling'||a.type==='Cycling')?'#6B5FD4':a.type==='Running'?'#2BB6A3':a.type==='Yoga'?'#9A9499':a.type==='LowerBody'?'#E8A23D':a.type==='UpperBody'?'#4FA3D1':'#E0314F');
+  const hrColors=hrActs.map(a=>(a.type==='Indoor Cycling'||a.type==='Cycling')?'#6B5FD4':a.type==='Running'?'#2BB6A3':a.type==='Yoga'?'#9A9499':a.type==='LowerBody'?'#E8A23D':a.type==='UpperBody'?'#C084FC':'#E0314F');
   charts.hrChart=new Chart(document.getElementById('hrChart'),{
     type:'bar',
     data:{labels:hrActs.map(a=>fmtShort(a.date)),datasets:[{label:'Avg HR',data:hrActs.map(a=>a.hr),backgroundColor:hrColors,borderRadius:3}]},
@@ -985,7 +985,7 @@ function renderTraining(){
 
   // Session list
   const recentActs = [...acts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
-  const typeColor={Cardio:'#E0314F',Running:'#2BB6A3',Cycling:'#6B5FD4',Yoga:'#9A9499',LowerBody:'#E8A23D',UpperBody:'#4FA3D1'};
+  const typeColor={Cardio:'#E0314F',Running:'#2BB6A3',Cycling:'#6B5FD4',Yoga:'#9A9499',LowerBody:'#E8A23D',UpperBody:'#C084FC'};
   const container = document.getElementById('sessionList');
   container.innerHTML=`<div class="readout-head">RECENT SESSIONS</div>`+recentActs.map(a=>{
     const k=(a.type==='Indoor Cycling'||a.type==='Cycling')?'Cycling':a.type==='Running'?'Running':a.type==='Yoga'?'Yoga':a.type==='LowerBody'?'LowerBody':a.type==='UpperBody'?'UpperBody':'Cardio';
@@ -1129,7 +1129,7 @@ function renderAnalysis(){
       {type:'bar',label:'Cycle',data:allMonths.map(m=>m.cycleMins),backgroundColor:'#6B5FD4',stack:'t',yAxisID:'y'},
       {type:'bar',label:'Yoga',data:allMonths.map(m=>m.yogaMins),backgroundColor:'#9A9499',stack:'t',yAxisID:'y'},
       {type:'bar',label:'Lower Body',data:allMonths.map(m=>m.lowerMins||0),backgroundColor:'#E8A23D',stack:'t',yAxisID:'y'},
-      {type:'bar',label:'Upper Body',data:allMonths.map(m=>m.upperMins||0),backgroundColor:'#4FA3D1',stack:'t',yAxisID:'y'},
+      {type:'bar',label:'Upper Body',data:allMonths.map(m=>m.upperMins||0),backgroundColor:'#C084FC',stack:'t',yAxisID:'y'},
       {type:'line',label:'Active kcal/day',data:activeKcalByMonth,borderColor:'#E8A23D',borderWidth:2,
        pointRadius:4,pointBackgroundColor:'#E8A23D',tension:.3,fill:false,yAxisID:'y2'},
     ]},
