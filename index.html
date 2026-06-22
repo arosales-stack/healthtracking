@@ -846,14 +846,25 @@ function renderHistory(){
   const maxTick = currentRange>14?7:currentRange;
 
   charts.calChart=new Chart(document.getElementById('calChart'),{
-    type:'line',
+    type:'bar',
     data:{labels,datasets:[
-      {label:'Garmin TDEE',data:garminBurnData,borderColor:'#6B5FD4',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:.3,fill:false},
-      {label:'Active kcal',data:trainCalData,borderColor:'#E8A23D',borderWidth:1.5,borderDash:[2,3],pointRadius:0,tension:.3,fill:false},
-      {label:'Intake',data:calData,borderColor:'#EDE8E1',borderWidth:2,pointRadius:2,pointBackgroundColor:'#EDE8E1',tension:.3,fill:false},
+      {type:'bar',label:'Intake',data:calData,backgroundColor:'rgba(237,232,225,.7)',borderRadius:4,yAxisID:'y'},
+      {type:'line',label:'Garmin burn',data:garminBurnData,borderColor:'#6B5FD4',borderWidth:2,pointRadius:3,pointBackgroundColor:'#6B5FD4',tension:0,fill:false,yAxisID:'y'},
+      {type:'line',label:'Active kcal',data:trainCalData,borderColor:'#E8A23D',borderWidth:1.5,borderDash:[3,3],pointRadius:2,pointBackgroundColor:'#E8A23D',tension:0,fill:false,yAxisID:'y'},
     ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
-      scales:{x:{grid:{color:GRID},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},y:{grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:5}}}}
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
+        afterBody:items=>{
+          const burn=garminBurnData[items[0].dataIndex];
+          const intake=calData[items[0].dataIndex];
+          if(burn&&intake) return [`Deficit: ${burn-intake} kcal`];
+          return [];
+        }
+      }}},
+      scales:{
+        x:{grid:{color:GRID},border:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:maxTick}},
+        y:{grid:{color:GRID},border:{display:false},ticks:{maxTicksLimit:5},min:0}
+      }}
   });
 
   charts.macroChart=new Chart(document.getElementById('macroChart'),{
