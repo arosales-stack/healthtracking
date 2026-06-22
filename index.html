@@ -170,9 +170,8 @@ body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:
         <div style="padding:0 8px 10px;font-size:11px;font-weight:500">Calories — intake vs. TDEE vs. active output</div>
         <div class="chart-wrap chart-h-md" style="height:150px"><canvas id="calChart"></canvas></div>
         <div class="legend" style="padding-left:8px">
-          <div class="legend-item"><span class="legend-dot" style="background:#EDE8E1"></span>Intake</div>
-          <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>TDEE</div>
-          <div class="legend-item"><span class="legend-dot" style="background:#E8A23D"></span>Active kcal</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgba(237,232,225,.7)"></span>Intake</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6B5FD4"></span>Garmin burn</div>
         </div>
       </div>
       <div class="card" style="padding:14px 8px 6px">
@@ -850,7 +849,6 @@ function renderHistory(){
     data:{labels,datasets:[
       {type:'bar',label:'Intake',data:calData,backgroundColor:'rgba(237,232,225,.7)',borderRadius:4,yAxisID:'y'},
       {type:'line',label:'Garmin burn',data:garminBurnData,borderColor:'#6B5FD4',borderWidth:2,pointRadius:3,pointBackgroundColor:'#6B5FD4',tension:0,fill:false,yAxisID:'y'},
-      {type:'line',label:'Active kcal',data:trainCalData,borderColor:'#E8A23D',borderWidth:1.5,borderDash:[3,3],pointRadius:2,pointBackgroundColor:'#E8A23D',tension:0,fill:false,yAxisID:'y'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
