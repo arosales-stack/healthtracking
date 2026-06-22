@@ -367,6 +367,9 @@ body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:
 // ── Activity data (from Garmin CSV) ──────────────────────────────────────────
 const ACTIVITIES = [
   // Jun 2026
+  {date:'2026-06-21',type:'LowerBody',mins:30,cal:180,hr:130},
+  {date:'2026-06-21',type:'UpperBody',mins:30,cal:160,hr:125},
+  {date:'2026-06-21',type:'Yoga',mins:25,cal:70,hr:88},
   {date:'2026-06-20',type:'Running',mins:20,cal:160,hr:148},
   {date:'2026-06-20',type:'LowerBody',mins:60,cal:280,hr:128},
   {date:'2026-06-20',type:'Yoga',mins:25,cal:70,hr:88},
@@ -578,7 +581,7 @@ const ACTIVITIES = [
 ];
 
 // ── Storage ──────────────────────────────────────────────────────────────────
-const DAYS_KEY = 'fuel-log:days';
+const DAYS_KEY = 'fuel-log:days:v2';
 let DAYS = {};
 let currentRange = 7;
 let currentTrainingRange = 7;
@@ -664,6 +667,7 @@ function buildSeed() {
     "2026-06-18":{cal:1695,p:129,c:143,f:67,s:34,burn:2648},
     "2026-06-19":{cal:1800,p:120,c:155,f:55,s:28,burn:3139,est:true},
     "2026-06-20":{cal:1937,p:201,c:157,f:56,s:71,burn:2917},
+    "2026-06-21":{cal:1760,p:138,c:163,f:59,s:46,burn:3000},
   };
   const avgs = {
     '2026-01':{cal:1852,p:138,c:179,f:64,burn:2380},
