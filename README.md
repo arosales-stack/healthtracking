@@ -1,87 +1,70 @@
 # HEALTH LOG — Project Documentation
 
 ## Live site
-Deployed at: https://healthtracking.pages.dev (or your custom domain if configured)
+Deployed at: https://healthtracking.pages.dev
 
 ## Stack
 - Single HTML file (`index.html`) — all JS, CSS, charts inline
 - Hosted on Cloudflare Pages, auto-deploys on every GitHub push
-- Data persists in browser via `localStorage` + Cloudflare artifact storage key `fuel-log:days`
+- Data persists in browser via `localStorage` + storage key `fuel-log:days:v2`
 - Charts: Chart.js 4.4.1 via CDN
 
-## How Claude updates the site
-Claude (in the HEALTH LOG project conversation) has:
-- GitHub token stored in conversation memory → pushes `index.html` to this repo
-- Cloudflare auto-deploys on every push to `main` — no manual step needed
-- Full deploy takes ~30 seconds after Claude pushes
+## CRITICAL: What Claude must do at the start of every new conversation
+1. Fetch the live `index.html` from GitHub via API — NEVER use the stale project file
+2. Work from that fetched file for all edits
 
-**GitHub repo:** `arosales-stack/healthtracking`
-**Cloudflare project:** `healthtracking`
-**Branch:** `main`
-**File:** `index.html` (root)
+## CRITICAL: What Claude must do on every single deploy
+1. Edit `index.html` with the required changes
+2. Push `index.html` to GitHub via API
+3. Rebuild and present the updated `health-log.xlsx` — NO EXCEPTIONS
+4. Confirm both are done before ending the response
 
 ## Daily food logging workflow
-Logging happens in the HEALTH LOG Claude project conversation:
-1. Drop food items in natural language any number of times during the day
-2. Claude keeps a running total but does not write anything yet
-3. Signal end of day: "log it" / "done" / "c'est tout" / "fin"
-4. Claude generates a one-tap updater artifact
-5. Tap it once → writes to `fuel-log:days` → dashboard updates
+1. User drops food items in natural language throughout the day
+2. Claude keeps a running total, one line per item, running total updated after each
+3. Oats = 38 kcal per tablespoon — non-negotiable
+4. Signal end of day: "log it" / "done" / "c'est tout" / "fin"
+5. Claude writes the day to the seed data in index.html, pushes to GitHub, rebuilds Excel
 
-**Garmin burn:** give weekly total (Claude divides by 7) or daily figure directly.
+## Training categories (as of Jun 21 2026)
+- **LowerBody** — glutes, legs, hip hinge (orange #E8A23D)
+- **UpperBody** — push, pull, shoulders (purple-pink #C084FC)
+- **Cardio** — BodyCombat, conditioning, intervals (red #E0314F)
+- **Running** — (teal #2BB6A3)
+- **Cycling** — (purple #6B5FD4)
+- **Yoga** — (grey #9A9499)
+Garmin lumps strength into "Cardio" — user tells Claude actual session breakdown daily.
 
-## Daily website update workflow
-When you want the live site updated after any code change:
-1. Ask Claude to make the change in the project conversation
-2. Claude edits `index.html` locally and pushes to GitHub via API
-3. Cloudflare deploys automatically — done in ~30 seconds
-4. No terminal, no manual upload needed
+## Daily Garmin burn
+User provides daily or weekly screenshot. Claude logs exact daily figure per day.
+GARMIN_DAILY lookup in index.html overrides weekly averages for exact dates.
 
 ## Storage schema
-Key: `fuel-log:days`
+Key: `fuel-log:days:v2`
 ```
 {
   "YYYY-MM-DD": {
-    cal,      // total kcal eaten
-    p,        // protein g
-    c,        // carbs g
-    f,        // fat g
-    s,        // sugar g
-    burn      // Garmin kcal burned (0 if not provided)
+    cal, p, c, f, s, burn, est (optional)
   }
 }
 ```
 
-## Targets
+## Nutrition targets
 - Intake: 1800–1900 kcal
 - Protein: ≥125g
 - Carbs: 150–200g
 - Fat: 50–70g
-- TDEE: ~2,341 kcal/day (Garmin 1-year avg: 1,631 resting + 710 active)
+- TDEE: ~2,341 kcal/day (Garmin 1-year: 1,631 resting + 710 active)
 
-## Energy data (Garmin Connect — Jun 2025–Jun 2026)
-- Avg active: 4,971 kcal/week → ~710/day
-- Avg resting: 11,417 kcal/week → ~1,631/day
-- Avg total: 16,388 kcal/week → ~2,341/day
-
-## Activity data
-Sourced from Garmin CSV export (`Activities_3.csv`, 280 rows).
-Baked into `index.html` as the `ACTIVITIES` array.
-Types tracked: Cardio, Running, Cycling, Indoor Cycling, Yoga.
-
-## Panels
-- **History** — 7/30/90D: intake vs TDEE vs active kcal, macros, training volume
-- **Training** — sessions by type, daily volume, HR per session, recent session list
-- **Analysis** — full 8-month timeline, energy balance, training vs active kcal, carb% vs intensity, integrated pattern readout
-
-## GitHub token
-Stored in this conversation's context. If the conversation is reset or token expires,
-generate a new classic token at github.com → Settings → Developer settings →
-Personal access tokens → Tokens (classic) → repo scope only.
-Token expiry: 30 days from creation (check GitHub for current expiry).
+## GitHub repo
+arosales-stack/healthtracking — token in memory, repo scope, 30-day expiry
+Deploy: push index.html to root of main branch via GitHub Contents API
 
 ## Cloudflare
-Project name: `healthtracking`
-Account ID: stored in conversation
-Git integration: connected to `arosales-stack/healthtracking` main branch
-No build command — static file deploy only.
+Project: healthtracking — connected to GitHub main, auto-deploys on push
+Account ID: cc4b3a9350fc1bc09d651d21ad508681
+
+## Excel file: health-log.xlsx
+Three sheets: Food Log, Training Log, Energy Summary
+Must be rebuilt and presented on EVERY deploy. No exceptions.
+Dark theme matching the dashboard.
