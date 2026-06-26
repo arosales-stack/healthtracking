@@ -365,6 +365,9 @@ body{background:#0E0D10;color:#EDE8E1;font-family:'Inter',sans-serif;min-height:
 <script>
 // ── Activity data (from Garmin CSV) ──────────────────────────────────────────
 const ACTIVITIES = [
+  {date:'2026-06-25',type:'LowerBody',mins:60,cal:280,hr:128},
+  {date:'2026-06-24',type:'LowerBody',mins:60,cal:280,hr:128},
+  {date:'2026-06-24',type:'Yoga',mins:25,cal:70,hr:88},
   {date:'2026-06-23',type:'LowerBody',mins:60,cal:280,hr:128},
   {date:'2026-06-23',type:'Yoga',mins:30,cal:80,hr:88},
   // Jun 2026
@@ -671,6 +674,8 @@ function buildSeed() {
     "2026-06-21":{cal:1760,p:138,c:163,f:59,s:46,burn:3000},
     "2026-06-22":{cal:2110,p:150,c:186,f:57,s:37,burn:2580},
     "2026-06-23":{cal:1851,p:131,c:183,f:67,s:30,burn:2398},
+    "2026-06-24":{cal:1590,p:126,c:151,f:59,s:11,burn:2300},
+    "2026-06-25":{cal:1815,p:134,c:192,f:56,s:33,burn:2500},
   };
   const avgs = {
     '2026-01':{cal:1852,p:138,c:179,f:64,burn:2380},
@@ -1022,7 +1027,7 @@ const GARMIN_WEEKLY = {
 // Exact daily Garmin totals where available (override weekly avg)
 const GARMIN_DAILY = {
   '2026-06-15':2824,'2026-06-16':2687,'2026-06-17':2772,
-  '2026-06-18':2648,'2026-06-19':3139,'2026-06-20':2917,'2026-06-21':1816,
+  '2026-06-18':2648,'2026-06-19':3139,'2026-06-20':2917,'2026-06-21':3000,'2026-06-22':2580,'2026-06-23':2398,'2026-06-24':2300,'2026-06-25':2500,
 };
 
 // Get Garmin avg daily burn — daily exact first, then weekly avg
